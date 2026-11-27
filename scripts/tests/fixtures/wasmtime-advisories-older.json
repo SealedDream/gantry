@@ -1,0 +1,1 @@
+[{"ghsa_id":"GHSA-test-0000-0002","summary":"Test fixture: fixed long ago","severity":"high","vulnerabilities":[{"package":{"ecosystem":"rust","name":"wasmtime"},"vulnerable_version_range":"< 24.0.1","first_patched_version":"24.0.1"}]}]

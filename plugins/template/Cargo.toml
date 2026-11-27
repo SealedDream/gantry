@@ -1,0 +1,25 @@
+# Starter project for a Bastion plugin. Copy this folder, then change the package name and
+# everything in plugin.toml. Build: cargo build --release --target wasm32-wasip2
+[package]
+name = "bastion-plugin-template"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# In a copy outside this repository, point this at the published crate or a git path.
+bastion-plugin-sdk = { path = "../sdk" }
+
+[profile.release]
+opt-level = "s"
+strip = true
+panic = "abort"
+codegen-units = 1
+lto = true
+
+# Its own workspace: it is not built with the SDK and the test host.
+[workspace]

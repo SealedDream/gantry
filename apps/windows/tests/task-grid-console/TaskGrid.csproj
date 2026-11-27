@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- WIN-TASKS-AC: unit checks of the Tasks results grid model (TaskGrid.cs, port of Mac TaskGridModel.swift and its
+       18 checks in apps/macos/tests/task-grid/main.swift). No window, no core, no network: runs anywhere dotnet runs.
+       Run: dotnet run (exit 0 = all pass). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Bastion.Tests</RootNamespace>
+    <AssemblyName>task-grid-console</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="..\..\TaskGrid.cs" Link="TaskGrid.cs" />
+  </ItemGroup>
+</Project>

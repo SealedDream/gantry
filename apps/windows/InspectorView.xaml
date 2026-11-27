@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The details pane (inspector): the selected item's title, actions and sections (WIN-COLD-LIGHT). It was part of
+     MainWindow.xaml but stays hidden until a connection or session is selected, so the window builds it on its first
+     showing (MainWindow.EnsureInspector) and the first frame parses none of it. Events are wired in
+     MainWindow.LightStart.cs (WireInspector), to the same handlers as before. -->
+<Grid
+    x:Class="Bastion.Shell.InspectorView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Bastion.Shell"
+    Grid.Column="2" BorderBrush="{ThemeResource DividerBrush}" BorderThickness="{StaticResource LeftDividerThickness}"
+    AutomationProperties.Name="Details" AutomationProperties.LandmarkType="Custom" AutomationProperties.LocalizedLandmarkType="Details">
+    <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+    <Grid Padding="{StaticResource InspectorHeaderPadding}" BorderBrush="{ThemeResource DividerBrush}" BorderThickness="{StaticResource BottomDividerThickness}"
+          ColumnSpacing="{StaticResource Space8}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <StackPanel VerticalAlignment="Center">
+            <TextBlock x:Name="InspectorTitle" x:FieldModifier="internal" Text="Details" Style="{StaticResource BodyStrongTextStyle}" TextTrimming="CharacterEllipsis"
+                       IsTextSelectionEnabled="True" AutomationProperties.HeadingLevel="Level2" />
+            <TextBlock x:Name="InspectorKind" x:FieldModifier="internal" Style="{StaticResource CaptionSecondaryTextStyle}" TextTrimming="CharacterEllipsis" Visibility="Collapsed" />
+            <!-- One primary action from the core (Connect, Show Session, New Connection), compact secondary actions, the rest
+                 (destructive ones included) under More actions, as in the macOS inspector. -->
+            <StackPanel x:Name="InspectorActions" x:FieldModifier="internal" Orientation="Horizontal" Spacing="{StaticResource Space4}" Margin="{StaticResource InspectorActionsMargin}" Visibility="Collapsed">
+                <Button x:Name="InspectorPrimaryButton" x:FieldModifier="internal" Style="{StaticResource AccentButtonStyle}" />
+                <Button x:Name="CopyHostButton" x:FieldModifier="internal" Style="{StaticResource SubtleButtonStyle}"
+                        ToolTipService.ToolTip="Copy the address" AutomationProperties.Name="Copy address">
+                    <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space8}">
+                        <FontIcon Glyph="{StaticResource GlyphCopy}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource IconSize}" />
+                        <TextBlock x:Name="CopyHostLabel" x:FieldModifier="internal" Text="Copied" VerticalAlignment="Center" Visibility="Collapsed" />
+                    </StackPanel>
+                </Button>
+                <Button x:Name="InspectorPropertiesButton" x:FieldModifier="internal" Style="{StaticResource SubtleButtonStyle}"
+                        ToolTipService.ToolTip="Edit properties (Alt+Enter)" AutomationProperties.Name="Properties">
+                    <FontIcon Glyph="{StaticResource GlyphEdit}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource IconSize}" />
+                </Button>
+                <Button x:Name="InspectorMoreButton" x:FieldModifier="internal" Style="{StaticResource SubtleButtonStyle}"
+                        ToolTipService.ToolTip="More actions" AutomationProperties.Name="More actions">
+                    <FontIcon Glyph="{StaticResource GlyphMore}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource IconSize}" />
+                    <Button.Flyout>
+                        <MenuFlyout x:Name="InspectorMoreMenu" x:FieldModifier="internal" Placement="BottomEdgeAlignedRight" />
+                    </Button.Flyout>
+                </Button>
+            </StackPanel>
+        </StackPanel>
+        <Button x:Name="HideInspectorButton" x:FieldModifier="internal" Grid.Column="1" Style="{StaticResource SubtleButtonStyle}" VerticalAlignment="Top"
+                ToolTipService.ToolTip="Hide the details pane" AutomationProperties.Name="Hide details pane">
+            <FontIcon Glyph="{StaticResource GlyphClose}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource SmallIconSize}" />
+        </Button>
+    </Grid>
+    <ScrollViewer x:Name="InspectorScroll" x:FieldModifier="internal" Grid.Row="1" VerticalScrollBarVisibility="Hidden">
+        <StackPanel x:Name="InspectorBody" x:FieldModifier="internal" Padding="{StaticResource InspectorBodyPadding}" />
+    </ScrollViewer>
+    <StackPanel x:Name="InspectorFooter" x:FieldModifier="internal" Grid.Row="2" Padding="{StaticResource InspectorHeaderPadding}" Spacing="{StaticResource Space4}"
+                BorderBrush="{ThemeResource DividerBrush}" BorderThickness="{StaticResource TopDividerThickness}" Visibility="Collapsed"
+                AutomationProperties.Name="Connection history">
+        <TextBlock x:Name="LastConnectedText" x:FieldModifier="internal" Style="{StaticResource CaptionSecondaryTextStyle}" TextTrimming="CharacterEllipsis" />
+        <TextBlock x:Name="LastResultText" x:FieldModifier="internal" Style="{StaticResource CaptionSecondaryTextStyle}" TextTrimming="CharacterEllipsis" />
+    </StackPanel>
+</Grid>

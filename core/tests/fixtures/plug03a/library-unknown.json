@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "0a000000-0000-4000-8000-000000000001",
+  "name": "Shared",
+  "revision": 3,
+  "root": {
+    "id": "0a000000-0000-4000-8000-000000000002",
+    "name": "Root",
+    "color": null,
+    "defaults": { "port": null, "username": "ops", "future_default": { "a": [1, 2, { "b": null }] } },
+    "children": [
+      {
+        "kind": "folder",
+        "id": "0a000000-0000-4000-8000-000000000003",
+        "name": "Databases",
+        "folder_badge": "db",
+        "defaults": {},
+        "children": [
+          {
+            "kind": "connection",
+            "id": "0a000000-0000-4000-8000-000000000004",
+            "name": "orders-db",
+            "protocol": "postgresql",
+            "host": "db.lab.example",
+            "settings": { "port": 5432, "username": "app", "sslmode": "verify-full" },
+            "tags": ["db"],
+            "notes": "kept",
+            "plugin": {
+              "id": "org.bastion.postgresql",
+              "version": 3,
+              "fields": {
+                "database": "orders",
+                "schemas": ["public", "audit"],
+                "ratio": 0.25,
+                "big": 18446744073709551615,
+                "neg": -7,
+                "nested": { "on": true, "off": false, "none": null }
+              }
+            }
+          },
+          {
+            "kind": "connection",
+            "id": "0a000000-0000-4000-8000-000000000005",
+            "name": "web01",
+            "protocol": "ssh",
+            "host": "web01.lab.example",
+            "future_flag": true,
+            "settings": { "port": 2222 }
+          }
+        ]
+      }
+    ]
+  },
+  "type_defaults": {
+    "ssh": { "port": 22, "username": "ops", "future_ssh_default": "x" },
+    "postgresql": { "port": 5432, "sslmode": "require", "pool": { "max": 4 } }
+  },
+  "plugins": { "org.bastion.postgresql": { "min_version": "1.2.0" } }
+}

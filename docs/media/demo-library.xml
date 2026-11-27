@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mrng:Connections xmlns:mrng="http://mremoteng.org" Name="Connections" Export="false" EncryptionEngine="AES" BlockCipherMode="GCM" KdfIterations="1000" FullFileEncryption="false" Protected="" ConfVersion="2.6">
+  <Node Name="Production" Type="Container" Hostname="" Protocol="SSH2" Port="22">
+    <Node Name="Web" Type="Container" Hostname="" Protocol="SSH2" Port="22">
+      <Node Name="web-01" Type="Connection" Hostname="web-01.example.com" Username="admin" Protocol="SSH2" Port="22" />
+      <Node Name="web-02" Type="Connection" Hostname="web-02.example.com" Username="admin" Protocol="SSH2" Port="22" />
+      <Node Name="lb-edge" Type="Connection" Hostname="203.0.113.10" Username="admin" Protocol="SSH2" Port="22" />
+    </Node>
+    <Node Name="Databases" Type="Container" Hostname="" Protocol="SSH2" Port="22">
+      <Node Name="db-primary" Type="Connection" Hostname="db1.example.com" Username="postgres" Protocol="SSH2" Port="22" />
+      <Node Name="db-replica" Type="Connection" Hostname="db2.example.com" Username="postgres" Protocol="SSH2" Port="22" />
+    </Node>
+    <Node Name="Windows" Type="Container" Hostname="" Protocol="RDP" Port="3389">
+      <Node Name="dc-01" Type="Connection" Hostname="dc-01.example.com" Protocol="RDP" Port="3389" />
+      <Node Name="file-srv" Type="Connection" Hostname="203.0.113.25" Protocol="RDP" Port="3389" />
+    </Node>
+  </Node>
+  <Node Name="Staging" Type="Container" Hostname="" Protocol="SSH2" Port="22">
+    <Node Name="stage-app" Type="Connection" Hostname="stage.example.com" Username="deploy" Protocol="SSH2" Port="22" />
+    <Node Name="stage-vnc" Type="Connection" Hostname="203.0.113.40" Protocol="VNC" Port="5900" />
+  </Node>
+  <Node Name="Network" Type="Container" Hostname="" Protocol="SSH2" Port="22">
+    <Node Name="core-sw-01" Type="Connection" Hostname="198.51.100.2" Username="netops" Protocol="SSH2" Port="22" />
+    <Node Name="fw-01" Type="Connection" Hostname="198.51.100.1" Username="netops" Protocol="SSH2" Port="22" />
+  </Node>
+</mrng:Connections>

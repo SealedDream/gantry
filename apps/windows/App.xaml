@@ -1,0 +1,21 @@
+<Application
+    x:Class="Bastion.Shell.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+                <!-- The chosen accent; before the files below, which resolve accent references as they load. -->
+                <ResourceDictionary Source="ms-appx:///Themes/Accent.xaml" />
+                <!-- Bastion's design system (see each file's header). All four come after XamlControlsResources:
+                     Tokens.xaml overrides ContentControlThemeFontFamily, Buttons.xaml replaces the stock Button
+                     styles (no BrushTransition; docs/TESTING.md, "WinUI CPU spin"). -->
+                <ResourceDictionary Source="ms-appx:///Themes/Colors.xaml" />
+                <ResourceDictionary Source="ms-appx:///Themes/Tokens.xaml" />
+                <ResourceDictionary Source="ms-appx:///Themes/Icons.xaml" />
+                <ResourceDictionary Source="ms-appx:///Themes/Buttons.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

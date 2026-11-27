@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Headless test of the Test Connection wire format and verdict (SEC-07). It compiles the app's own
+    Interop\ProbeReport.cs, so what is tested is the code the app ships. No window, no desktop.
+
+      dotnet run -c Release                      the logic cases (any machine)
+      dotnet run -c Release (two dashes) live DLLDIR HOST PORT
+                                                 also drives the real bastion_cabi.dll in DLLDIR against an SSH
+                                                 server whose key is unknown; no login is ever sent to it.
+                                                 The exact command line is at the top of Program.cs.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RollForward>Major</RollForward>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+    <RootNamespace>Bastion.Shell.Tests</RootNamespace>
+    <AssemblyName>probe-console</AssemblyName>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\Interop\ProbeReport.cs" Link="ProbeReport.cs" />
+    <Compile Include="..\..\Interop\ProbeRoute.cs" Link="ProbeRoute.cs" />
+  </ItemGroup>
+</Project>

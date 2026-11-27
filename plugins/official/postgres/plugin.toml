@@ -1,0 +1,30 @@
+schema = 1
+id = "dev.gantry.postgres"
+name = "PostgreSQL"
+version = "1.1.0"
+api = "1.0"
+publisher = "Gantry"
+description = "Query PostgreSQL databases through Gantry connections: object browser, query tool, results and CSV export."
+license = "Apache-2.0"
+repository = "https://github.com/SealedDream/gantry/tree/main/plugins/official/postgres"
+
+[permissions]
+network = "entry"
+credentials = "entry"
+clipboard = "write"
+files = ["save"]
+
+[[connection_types]]
+id = "postgres"
+name = "PostgreSQL"
+default_port = 5432
+
+[[connection_types.fields]]
+key = "database"
+label = "Database"
+kind = "text"
+
+[[commands]]
+id = "new-query"
+title = "New Query"
+on = "connection:postgres"

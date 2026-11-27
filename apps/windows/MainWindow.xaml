@@ -1,0 +1,403 @@
+﻿<Window
+    x:Class="Bastion.Shell.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Bastion.Shell"
+    Title="Gantry">
+
+    <!--
+      Layout: toolbar / [navigation pane | splitter | layer (workspace | splitter | inspector)] / status bar.
+      Every colour, size, margin and radius comes from Themes/Colors.xaml and Themes/Tokens.xaml.
+      CPU-spin rules (docs/TESTING.md, "WinUI CPU spin"): no TabView, no ContentDialog, no item or content
+      transitions, scrollbars hidden (wheel, touch and keyboard scrolling still work), Button templates without
+      BrushTransition (Themes/Buttons.xaml).
+    -->
+    <!-- The shell background is the solid fallback; ApplyBackdrop swaps it for Mica on Windows 11 only. -->
+    <Grid x:Name="RootGrid" Background="{ThemeResource ShellBackgroundBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Row 0: the title bar (library switcher, tabs, New, Bastion menu), TitleBarView.xaml. Built after the first frame,
+             when the content moves into the title bar (MainWindow.LightStart.cs); until then the system title bar shows. -->
+
+        <Grid x:Name="Body" Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="NavColumn" Width="{StaticResource NavPaneWidth}" MinWidth="{StaticResource NavPaneMinWidth}" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Navigation pane: search over the connection tree. -->
+            <Grid x:Name="NavPane" SizeChanged="OnNavPaneSizeChanged" AutomationProperties.Name="Navigation" AutomationProperties.LandmarkType="Navigation">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <StackPanel x:Name="NavHeaderStack">
+                <!-- W1-W4, W7: the open library (switch, open or create from its menu) and the pane's pin. -->
+                <Grid x:Name="NavHeaderRow" Margin="{StaticResource NavSearchMargin}" ColumnSpacing="{StaticResource Space4}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <!-- One box (owner 2026-11-15, as on the Mac): it filters the tree as you type; Enter connects to the top match or to a
+                         typed address (SearchBox_KeyDown). It sits in the sidebar's top row beside the pin; the switcher is in the title bar. -->
+                    <Grid x:Name="SearchHost">
+                        <!-- WIN-COLD-LIGHT: the first frame paints this look-alike (the TextBox's own theme resources, padding and
+                             placeholder); right after it the real TextBox takes its place (MainWindow.LightStart.cs, BuildSearchBox).
+                             A TextBox loads WinUIEdit.dll and its text services: 86 ms of page-ins plus 33 ms of set-up on a slow
+                             boot after a reboot (q-cold-trace6), all before the first frame. -->
+                        <Border x:Name="SearchPlaceholder" Background="{ThemeResource TextControlBackground}" BorderBrush="{ThemeResource TextControlBorderBrush}"
+                                BorderThickness="{ThemeResource TextControlBorderThemeThickness}" CornerRadius="{ThemeResource ControlCornerRadius}"
+                                MinHeight="{ThemeResource TextControlThemeMinHeight}" AutomationProperties.AccessibilityView="Raw">
+                            <TextBlock Text="Search or connect" Margin="{StaticResource SearchBoxPadding}" FontFamily="{ThemeResource ContentControlThemeFontFamily}"
+                                       FontSize="{ThemeResource ControlContentThemeFontSize}" Foreground="{ThemeResource TextControlPlaceholderForeground}"
+                                       TextTrimming="CharacterEllipsis" IsHitTestVisible="False" />
+                        </Border>
+                        <FontIcon Glyph="{StaticResource GlyphSearch}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource SmallIconSize}"
+                                  Foreground="{ThemeResource TextSecondaryBrush}" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                  Margin="{StaticResource SearchIconMargin}" IsHitTestVisible="False" AutomationProperties.AccessibilityView="Raw" />
+                    </Grid>
+                    <Button x:Name="NavPinButton" Grid.Column="1" Style="{StaticResource SubtleButtonStyle}" VerticalAlignment="Center"
+                            Click="NavPin_Click"
+                            ToolTipService.ToolTip="Unpin navigation pane (Ctrl+Alt+N)" AutomationProperties.Name="Unpin navigation pane">
+                        <FontIcon Glyph="{StaticResource GlyphUnpin}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource SmallIconSize}" />
+                    </Button>
+                </Grid>
+                </StackPanel>
+                <TextBlock x:Name="NavMessage" Grid.Row="1" Style="{StaticResource CaptionSecondaryTextStyle}" Margin="{StaticResource NavMessageMargin}"
+                           TextWrapping="Wrap" Visibility="Collapsed" AutomationProperties.LiveSetting="Polite" />
+                <!-- WIN-FLAT-TREE: a flat, virtualized tree (LibraryTree.cs); a search keystroke rebinds only the rows in view.
+                     Drag-and-drop goes through the handlers in MainWindow.Tree.cs (the core keeps the order). -->
+                <!-- Background: the area below the last row must take a right-click (root menu); with no brush it is not hit-testable. -->
+                <local:LibraryTree x:Name="Tree" Grid.Row="2" Background="Transparent" SelectionChanged="Tree_SelectionChanged"
+                          Expanding="Tree_Expanding" Collapsed="Tree_Collapsed"
+                          ContextRequested="Tree_ContextRequested" DoubleTapped="Tree_DoubleTapped" ItemInvoked="Tree_ItemInvoked"
+                          AutomationProperties.Name="Connections">
+                    <!-- Filled from the core registry when it opens (MainWindow.Tree.cs, TreeMenu_Opening). -->
+                    <FlyoutBase.AttachedFlyout>
+                        <MenuFlyout x:Name="TreeMenu" Opening="TreeMenu_Opening" />
+                    </FlyoutBase.AttachedFlyout>
+                    <local:LibraryTree.ItemTemplate>
+                        <DataTemplate x:DataType="local:TreeItem">
+                            <local:LibraryRow DragStarting="TreeItem_DragStarting" DropCompleted="TreeItem_DropCompleted"
+                                          AllowDrop="True"
+                                          AutomationProperties.Name="{x:Bind AccessibleName, Mode=OneWay}" AutomationProperties.HelpText="{x:Bind Description}"
+                                          local:LazyToolTip.Text="{x:Bind RowTip, Mode=OneWay}">
+                                <Grid>
+                                <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space8}" Visibility="{x:Bind RowVisibility}">
+                                    <Grid Width="{StaticResource IconSize}" Height="{StaticResource IconSize}" VerticalAlignment="Center">
+                                        <!-- UI-05 / D12: the shared connection, folder and credential art (docs/design/icons); the font glyph only for
+                                             rows outside the set (Favorites, Application). The tooltip gives the icon's full name. -->
+                                        <local:ConnectionIcon IconId="{x:Bind ArtId}" Tint="{x:Bind HostColorBrush}" Visibility="{x:Bind ArtVisibility}"
+                                                              local:LazyToolTip.Text="{x:Bind IconLabel}" AutomationProperties.AccessibilityView="Raw" />
+                                        <FontIcon Glyph="{x:Bind Glyph}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource IconSize}"
+                                                  Foreground="{x:Bind IconBrush}" Visibility="{x:Bind FontGlyphVisibility}" local:LazyToolTip.Text="{x:Bind IconLabel}" />
+                                        <local:AppIcon Kind="Folder" Visibility="{x:Bind FolderVisibility}" />
+                                    </Grid>
+                                    <TextBlock Text="{x:Bind Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontWeight="Medium" Visibility="{x:Bind PlainNameVisibility}" />
+                                    <!-- UI-01: the name in the core's text-safe tone of the identity colour (plain in high contrast). -->
+                                    <TextBlock Text="{x:Bind Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontWeight="Medium" Visibility="{x:Bind TintedNameVisibility}"
+                                               Foreground="{x:Bind NameBrush}" />
+                                    <TextBlock Text="{x:Bind Name}" VerticalAlignment="Center" Style="{StaticResource SectionHeaderTextStyle}" Visibility="{x:Bind GroupVisibility}"
+                                               AutomationProperties.HeadingLevel="Level2" />
+                                    <!-- VAULT-TOLERANT-01: "Unsupported" after a credential a newer version saved (part of the row's name for UIA). -->
+                                    <TextBlock Text="{x:Bind Badge}" VerticalAlignment="Center" Foreground="{ThemeResource TextSecondaryBrush}"
+                                               Visibility="{x:Bind BadgeVisibility}" AutomationProperties.AccessibilityView="Raw" />
+                                    <!-- UI-05: a collapsed connection with open sessions shows their count, "build-01 (3)". -->
+                                    <TextBlock Text="{x:Bind CountText, Mode=OneWay}" VerticalAlignment="Center" Foreground="{ThemeResource TextSecondaryBrush}"
+                                               Visibility="{x:Bind CountVisibility, Mode=OneWay}" AutomationProperties.AccessibilityView="Raw" AutomationProperties.AutomationId="SessionCount" />
+                                    <!-- UI-01: a collapsed folder's connected items, "2/5". -->
+                                    <TextBlock Text="{x:Bind FolderCountText, Mode=OneWay}" VerticalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextSecondaryBrush}" Visibility="{x:Bind FolderCountVisibility, Mode=OneWay}"
+                                               AutomationProperties.AccessibilityView="Raw" AutomationProperties.AutomationId="FolderConnectedCount" />
+                                    <!-- UI-01: status marks. Dot connected, ring connecting (static), warning failed; the words are in the tooltip and name. -->
+                                    <Ellipse Width="8" Height="8" VerticalAlignment="Center" Fill="{ThemeResource StatusConnectedBrush}"
+                                             Visibility="{x:Bind ConnectedMarkVisibility, Mode=OneWay}" local:LazyToolTip.Text="{x:Bind LinkText, Mode=OneWay}"
+                                             AutomationProperties.Name="{x:Bind LinkText, Mode=OneWay}" AutomationProperties.AutomationId="StatusConnected" />
+                                    <Ellipse Width="8" Height="8" VerticalAlignment="Center" Stroke="{ThemeResource StatusConnectingBrush}" StrokeThickness="1.5"
+                                             Visibility="{x:Bind ConnectingMarkVisibility, Mode=OneWay}" local:LazyToolTip.Text="{x:Bind LinkText, Mode=OneWay}"
+                                             AutomationProperties.Name="{x:Bind LinkText, Mode=OneWay}" AutomationProperties.AutomationId="StatusConnecting" />
+                                    <FontIcon Glyph="{StaticResource GlyphError}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource SmallIconSize}"
+                                              Foreground="{ThemeResource StatusFailedBrush}" VerticalAlignment="Center" Visibility="{x:Bind FailedMarkVisibility, Mode=OneWay}"
+                                              local:LazyToolTip.Text="{x:Bind LinkText, Mode=OneWay}" AutomationProperties.Name="{x:Bind LinkText, Mode=OneWay}"
+                                              AutomationProperties.AutomationId="StatusFailed" />
+                                    <!-- Per-host colour (core host_color, own or a folder's): a small dot, like the Mac and Tauri badge. -->
+                                    <Ellipse Width="8" Height="8" VerticalAlignment="Center" Fill="{x:Bind HostColorBrush}" Visibility="{x:Bind HostColorVisibility}"
+                                             local:LazyToolTip.Text="{x:Bind HostColorLabel}" AutomationProperties.Name="{x:Bind HostColorLabel}" AutomationProperties.AutomationId="HostColorBadge" />
+                                    <FontIcon Glyph="{StaticResource GlyphFavorite}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource SmallIconSize}"
+                                              Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center" Visibility="{x:Bind FavoriteVisibility}"
+                                              local:LazyToolTip.Text="Favorite" AutomationProperties.AccessibilityView="Raw" />
+                                    <!-- PLUG-03a: a type this build does not know. The core's text, also in the row's help text and name. -->
+                                    <FontIcon Glyph="{StaticResource GlyphInfo}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource SmallIconSize}"
+                                              Foreground="{ThemeResource TextSecondaryBrush}" VerticalAlignment="Center" Visibility="{x:Bind UnavailableVisibility}"
+                                              local:LazyToolTip.Text="{x:Bind UnavailableText}" AutomationProperties.Name="{x:Bind UnavailableText}"
+                                              AutomationProperties.AutomationId="UnavailableMarker" />
+                                </StackPanel>
+                                <!-- UI-05: a session row is an 8 px status dot and the tab's title; the state is also in words (name, tooltip). -->
+                                <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space8}" Visibility="{x:Bind SessionVisibility}">
+                                    <Grid Width="{StaticResource IconSize}" Height="{StaticResource IconSize}" VerticalAlignment="Center">
+                                        <Ellipse Width="8" Height="8" HorizontalAlignment="Center" VerticalAlignment="Center" Fill="{x:Bind DotBrush, Mode=OneWay}"
+                                                 AutomationProperties.AutomationId="SessionDot" AutomationProperties.AccessibilityView="Raw" />
+                                    </Grid>
+                                    <TextBlock Text="{x:Bind Title, Mode=OneWay}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                                </Grid>
+                            </local:LibraryRow>
+                        </DataTemplate>
+                    </local:LibraryTree.ItemTemplate>
+                </local:LibraryTree>
+                <!-- Row 3: the Credentials section pinned under the tree (Native Mac parity), CredentialsPane.xaml. Built after the
+                     first frame (MainWindow.LightStart.cs), so its TreeView is not part of the first layout. -->
+                <!-- Bottom bar (Royal TS layout, MainWindow.AppSection.cs): Add and Settings menus, then the favourite toggle and
+                     Connect with its menu for the selected connection. Icon buttons with tooltips so it fits the narrowest pane. -->
+                <Grid x:Name="NavBottomBar" Grid.Row="4" Padding="{StaticResource NavBottomBarPadding}" ColumnSpacing="{StaticResource Space4}"
+                      BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0"
+                      AutomationProperties.Name="Navigation commands">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Button x:Name="BottomAddButton" Style="{StaticResource SubtleButtonStyle}"
+                            ToolTipService.ToolTip="Add" AutomationProperties.Name="Add">
+                        <FontIcon Glyph="{StaticResource GlyphAdd}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource IconSize}" />
+                        <Button.Flyout>
+                            <MenuFlyout Placement="TopEdgeAlignedLeft">
+                                <MenuFlyoutItem Text="New connection…" KeyboardAcceleratorTextOverride="Ctrl+N" Click="NewConnection_Click" AutomationProperties.Name="Add connection" />
+                                <MenuFlyoutItem Text="New folder…" KeyboardAcceleratorTextOverride="Ctrl+Shift+N" Click="NewFolder_Click" AutomationProperties.Name="Add folder" />
+                                <MenuFlyoutItem Text="Credential…" Click="CredentialManager_Click" AutomationProperties.Name="Add credential" />
+                                <MenuFlyoutSeparator />
+                                <MenuFlyoutItem Text="Quick Connect…" Click="QuickConnect_Click" AutomationProperties.Name="Add Quick Connect" />
+                                <MenuFlyoutItem Text="Import from file…" Click="ImportFile_Click" AutomationProperties.Name="Add from import file" />
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                    <Button x:Name="BottomSettingsButton" Grid.Column="1" Visibility="Collapsed" Style="{StaticResource SubtleButtonStyle}"
+                            ToolTipService.ToolTip="Settings" AutomationProperties.Name="Settings menu">
+                        <FontIcon Glyph="{StaticResource GlyphSettings}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource IconSize}" />
+                        <Button.Flyout>
+                            <MenuFlyout Placement="TopEdgeAlignedLeft">
+                                <MenuFlyoutItem Text="Properties…" Click="BottomProperties_Click" AutomationProperties.Name="Bottom properties" />
+                                <MenuFlyoutItem Text="Application settings…" Click="Settings_Click" AutomationProperties.Name="Application settings" />
+                                <MenuFlyoutItem Text="Credential Manager…" Click="CredentialManager_Click" AutomationProperties.Name="Bottom Credential Manager" />
+                                <MenuFlyoutItem Text="Tunnel Manager…" Click="TunnelManager_Click" AutomationProperties.Name="Bottom Tunnel Manager" />
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                    <ToggleButton x:Name="BottomFavoriteButton" Grid.Column="3" Visibility="Collapsed" IsEnabled="False"
+                                  MinWidth="{StaticResource MinHitTarget}" MinHeight="{StaticResource MinHitTarget}" Click="BottomFavorite_Click"
+                                  ToolTipService.ToolTip="Add to Favorites" AutomationProperties.Name="Add to Favorites">
+                        <FontIcon Glyph="{StaticResource GlyphFavorite}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource SmallIconSize}" />
+                    </ToggleButton>
+                    <!-- Connect: the button connects the selection, its arrow opens the Connect menu (the registry's commands). -->
+                    <SplitButton x:Name="BottomConnectButton" Grid.Column="4" Visibility="Collapsed" IsEnabled="False" MinHeight="{StaticResource MinHitTarget}" Click="BottomConnect_Click"
+                                 ToolTipService.ToolTip="Connect to the selected connection (Enter); the arrow shows more ways to connect"
+                                 AutomationProperties.Name="Bottom connect">
+                        <FontIcon Glyph="{StaticResource GlyphConnect}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource IconSize}" />
+                        <SplitButton.Flyout>
+                            <MenuFlyout x:Name="BottomConnectMenu" Placement="TopEdgeAlignedRight" Opening="BottomConnectMenu_Opening" />
+                        </SplitButton.Flyout>
+                    </SplitButton>
+                </Grid>
+            </Grid>
+
+            <local:PaneSplitter x:Name="NavSplitter" Grid.Column="1" Width="{StaticResource SplitterWidth}"
+                                ToolTipService.ToolTip="Drag to resize; double-click to reset"
+                                AutomationProperties.Name="Resize navigation pane"
+                                AutomationProperties.HelpText="Left and Right arrows resize, Enter restores the default width" />
+
+            <!-- The layer: workspace and inspector on one raised surface. -->
+            <Border x:Name="Layer" Grid.Column="2" Background="{ThemeResource LayerBackgroundBrush}" BorderBrush="{ThemeResource LayerStrokeBrush}"
+                    BorderThickness="{StaticResource LayerBorderThickness}" CornerRadius="{StaticResource LayerCornerRadius}">
+                <Grid x:Name="LayerGrid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition x:Name="InspectorColumn" Width="{StaticResource InspectorWidth}" MinWidth="{StaticResource InspectorMinWidth}" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Workspace: session tabs over the active session, or the empty state. -->
+                    <Grid x:Name="Workspace" AutomationProperties.Name="Workspace" AutomationProperties.LandmarkType="Main">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <!-- Column 0 holds the vertical tab list (tabs.vertical, MainWindow.VerticalTabs.cs); it is empty otherwise. -->
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <!-- The tab bar lives in the title bar (Toolbar column 4, MainWindow.TitleBar.cs): no separate tab row. -->
+
+                        <ScrollViewer x:Name="VerticalTabScroller" Grid.Row="1" Visibility="Collapsed" Width="{StaticResource VerticalTabsWidth}"
+                                      Padding="{StaticResource VerticalTabsPadding}" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
+                                      VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Tab list" />
+
+                        <Grid x:Name="SessionHost" Grid.Row="1" Grid.Column="1" Background="{ThemeResource SessionBackgroundBrush}" Padding="{StaticResource SessionPadding}" Visibility="Collapsed" />
+
+                        <!-- Start page: the top half is the empty state, the bottom half Recent sessions (MainWindow.Recents.cs). -->
+                        <Grid x:Name="StartPage" Grid.Row="1" Grid.Column="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    MaxWidth="{StaticResource EmptyStateMaxWidth}" Padding="{StaticResource EmptyStatePadding}" Spacing="{StaticResource Space8}">
+                            <Grid HorizontalAlignment="Center">
+                                <Viewbox x:Name="EmptyFolderIcon" Width="{StaticResource EmptyStateIconSize}" Height="{StaticResource EmptyStateIconSize}">
+                                    <local:AppIcon Kind="Folder" Foreground="{ThemeResource TextTertiaryBrush}" />
+                                </Viewbox>
+                                <FontIcon x:Name="EmptyTerminalIcon" Glyph="{StaticResource GlyphTerminal}" FontFamily="{StaticResource SymbolFontFamily}"
+                                          FontSize="{StaticResource EmptyStateIconSize}" Foreground="{ThemeResource TextTertiaryBrush}" />
+                            </Grid>
+                            <TextBlock x:Name="EmptyTitle" Style="{StaticResource BodyStrongTextStyle}" HorizontalAlignment="Center" TextAlignment="Center"
+                                       AutomationProperties.HeadingLevel="Level1" />
+                            <TextBlock x:Name="EmptyText" Style="{StaticResource BodySecondaryTextStyle}" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="{StaticResource Space8}" Margin="{StaticResource DialogBodyMargin}">
+                                <Button x:Name="EmptyNewConnection" Style="{StaticResource TextButtonStyle}" Content="New connection" Click="NewConnection_Click"
+                                        AutomationProperties.Name="Add a connection" />
+                                <!-- As on the Mac: Quick Connect… and New Local Shell as plain buttons; PowerShell and WSL stay in + ▾. -->
+                                <Button x:Name="EmptyQuickConnect" Content="Quick Connect…" Click="QuickConnect_Click" AutomationProperties.Name="Quick Connect" />
+                                <Button x:Name="EmptyLocalShell" Content="New Local Shell" Click="NewLocalShell_Click"
+                                        AutomationProperties.Name="Open local shell" />
+                                <Button x:Name="EmptyPowerShell" Visibility="Collapsed" Style="{StaticResource TextButtonStyle}" Content="PowerShell" Click="NewPowerShell_Click"
+                                        AutomationProperties.Name="Open PowerShell" />
+                                <Button x:Name="EmptyWsl" Visibility="Collapsed" Style="{StaticResource TextButtonStyle}" Content="WSL" Click="NewWsl_Click"
+                                        AutomationProperties.Name="Open WSL" />
+                            </StackPanel>
+                            <!-- Keys as configured in Settings › Keyboard (MainWindow.Settings.cs fills them); fixed keys for the rest. -->
+                            <Grid x:Name="ShortcutHints" Visibility="Collapsed" HorizontalAlignment="Center" ColumnSpacing="{StaticResource Space16}" RowSpacing="{StaticResource Space4}"
+                                  Margin="{StaticResource DialogBodyMargin}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock x:Name="HintNewConnection" Text="New connection" Style="{StaticResource CaptionTertiaryTextStyle}" HorizontalAlignment="Right" />
+                                <TextBlock x:Name="HintNewConnectionKeys" Grid.Column="1" Style="{StaticResource CaptionSecondaryTextStyle}" />
+                                <TextBlock x:Name="HintQuickConnect" Grid.Row="1" Text="Quick Connect" Style="{StaticResource CaptionTertiaryTextStyle}" HorizontalAlignment="Right" />
+                                <TextBlock x:Name="HintQuickConnectKeys" Grid.Row="1" Grid.Column="1" Style="{StaticResource CaptionSecondaryTextStyle}" />
+                                <TextBlock x:Name="HintPalette" Grid.Row="2" Text="Command palette" Style="{StaticResource CaptionTertiaryTextStyle}" HorizontalAlignment="Right" />
+                                <TextBlock x:Name="HintPaletteKeys" Grid.Row="2" Grid.Column="1" Style="{StaticResource CaptionSecondaryTextStyle}" />
+                                <TextBlock x:Name="HintNewFolder" Grid.Row="3" Text="New folder" Style="{StaticResource CaptionTertiaryTextStyle}" HorizontalAlignment="Right" />
+                                <TextBlock x:Name="HintNewFolderKeys" Grid.Row="3" Grid.Column="1" Style="{StaticResource CaptionSecondaryTextStyle}" />
+                                <TextBlock Grid.Row="4" Text="Search connections" Style="{StaticResource CaptionTertiaryTextStyle}" HorizontalAlignment="Right" />
+                                <TextBlock Grid.Row="4" Grid.Column="1" Text="Ctrl+F" Style="{StaticResource CaptionSecondaryTextStyle}" />
+                                <TextBlock Grid.Row="5" Text="New terminal" Style="{StaticResource CaptionTertiaryTextStyle}" HorizontalAlignment="Right" />
+                                <TextBlock Grid.Row="5" Grid.Column="1" Text="Ctrl+Shift+T" Style="{StaticResource CaptionSecondaryTextStyle}" />
+                            </Grid>
+                        </StackPanel>
+                        <Grid x:Name="RecentHost" Grid.Row="1" />
+                        </Grid>
+                    </Grid>
+
+                    <local:PaneSplitter x:Name="InspectorSplitter" Grid.Column="1" Width="{StaticResource SplitterWidth}"
+                                        ToolTipService.ToolTip="Drag to resize; double-click to reset"
+                                        AutomationProperties.Name="Resize details pane"
+                                        AutomationProperties.HelpText="Left and Right arrows resize, Enter restores the default width" />
+
+                    <!-- Inspector (the details pane): InspectorView.xaml, built on its first showing (MainWindow.EnsureInspector). -->
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Settings and the Credential Manager: full pages over the body, built in MainWindow.Settings.cs. -->
+        <Grid x:Name="PageHost" Grid.Row="1" Visibility="Collapsed" KeyDown="PageHost_KeyDown">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="PageSidebarColumn" Width="*" />
+                <ColumnDefinition Width="2*" />
+            </Grid.ColumnDefinitions>
+            <ContentControl x:Name="PageSidebar" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" IsTabStop="False" />
+            <Border Grid.Column="1" Background="{ThemeResource LayerBackgroundBrush}" BorderBrush="{ThemeResource LayerStrokeBrush}"
+                    BorderThickness="{StaticResource LayerBorderThickness}" CornerRadius="{StaticResource LayerCornerRadius}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid Padding="{StaticResource InspectorHeaderPadding}" BorderBrush="{ThemeResource DividerBrush}" BorderThickness="{StaticResource BottomDividerThickness}"
+                          ColumnSpacing="{StaticResource Space8}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="PageTitle" Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" AutomationProperties.HeadingLevel="Level1" />
+                        <ContentControl x:Name="PageActions" Grid.Column="1" IsTabStop="False" VerticalAlignment="Center" />
+                        <Button x:Name="PageClose" AutomationProperties.AutomationId="PageClose" Grid.Column="2" Style="{StaticResource SubtleButtonStyle}" VerticalAlignment="Center" Click="PageClose_Click"
+                                ToolTipService.ToolTip="Close (Esc)" AutomationProperties.Name="Close page">
+                            <FontIcon Glyph="{StaticResource GlyphClose}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource SmallIconSize}" />
+                        </Button>
+                    </Grid>
+                    <!-- Content fills the page up to a readable width, anchored left (the column caps it, not the content's own size). -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" MaxWidth="760" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ContentControl x:Name="PageContent" Padding="{StaticResource InspectorBodyPadding}"
+                                            HorizontalContentAlignment="Stretch" IsTabStop="False" />
+                        </Grid>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- In-window modal instead of ContentDialog (see MainWindow.xaml.cs). Laid out like the Windows 11 dialog:
+             content on the dialog surface, a command row below a divider, Cancel and the accent action side by side. -->
+        <local:ModalSurface x:Name="ModalHost" Grid.RowSpan="2" Visibility="Collapsed" Background="{ThemeResource ScrimBrush}" TabFocusNavigation="Cycle">
+            <Border x:Name="ModalCard" Width="{StaticResource DialogWidth}" MinWidth="{StaticResource DialogMinWidth}" MaxWidth="{StaticResource DialogMaxWidth}"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{StaticResource DialogOuterMargin}" CornerRadius="{StaticResource RadiusLarge}"
+                    Background="{ThemeResource DialogCommandBackgroundBrush}" BorderBrush="{ThemeResource DialogStrokeBrush}" BorderThickness="{StaticResource HairlineThickness}"
+                    AutomationProperties.AutomationControlType="Window">
+                <Grid>
+                    <!-- The body scrolls when the dialog is taller than the window (large zoom, short window); the
+                         command row below keeps its full height. -->
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled" CornerRadius="{StaticResource DialogTopCornerRadius}">
+                    <StackPanel Background="{ThemeResource DialogBackgroundBrush}" CornerRadius="{StaticResource DialogTopCornerRadius}" Padding="{StaticResource DialogPadding}">
+                        <TextBlock x:Name="ModalTitle" Style="{StaticResource SubtitleTextStyle}" TextWrapping="Wrap" AutomationProperties.HeadingLevel="Level1" />
+                        <TextBlock x:Name="ModalCaption" Style="{StaticResource CaptionSecondaryTextStyle}" Margin="{StaticResource DialogCaptionMargin}"
+                                   TextTrimming="CharacterEllipsis" Visibility="Collapsed" />
+                        <ContentControl x:Name="ModalBody" Margin="{StaticResource DialogBodyMargin}" HorizontalContentAlignment="Stretch" IsTabStop="False" />
+                    </StackPanel>
+                    </ScrollViewer>
+                    <!-- A decision the body asks for (Test Connection's host-key question, SEC-07-FIT) sits here, outside
+                         the scroll, so it never ends up below the window. Empty and collapsed otherwise. -->
+                    <ContentControl x:Name="ModalPinned" Grid.Row="1" Visibility="Collapsed" IsTabStop="False" HorizontalContentAlignment="Stretch"
+                                    Background="{ThemeResource DialogBackgroundBrush}" Padding="{StaticResource DialogPadding}" />
+                    <Grid x:Name="ModalFooter" Grid.Row="2" Padding="{StaticResource DialogPadding}" BorderBrush="{ThemeResource DividerBrush}" BorderThickness="{StaticResource TopDividerThickness}"
+                          CornerRadius="{StaticResource DialogBottomCornerRadius}" ColumnSpacing="{StaticResource Space8}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="ModalCancel" HorizontalAlignment="Stretch" MinWidth="{StaticResource DialogButtonMinWidth}" Click="ModalCancel_Click" />
+                        <Button x:Name="ModalPrimary" Grid.Column="1" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Stretch"
+                                MinWidth="{StaticResource DialogButtonMinWidth}" Click="ModalPrimary_Click" />
+                    </Grid>
+                </Grid>
+            </Border>
+        </local:ModalSurface>
+    </Grid>
+</Window>

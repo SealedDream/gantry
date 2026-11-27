@@ -1,0 +1,27 @@
+schema = 1
+id = "com.example.echo"
+name = "Echo"
+version = "0.1.0"
+api = "1.0"
+publisher = "Example"
+description = "Sends a line to the entry's server and shows the answer. A starting point for new plugins."
+license = "MIT OR Apache-2.0"
+repository = "https://example.com/echo"
+
+[permissions]
+network = "entry"
+
+[[connection_types]]
+id = "echo"
+name = "Echo"
+default_port = 7
+
+[[connection_types.fields]]
+key = "greeting"
+label = "Greeting"
+kind = "text"
+
+[[commands]]
+id = "send"
+title = "Send Greeting"
+on = "connection:echo"

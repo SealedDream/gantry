@@ -1,0 +1,8 @@
+# Accepted RustSec advisories: one ID per line, each with a reason and review date in a comment.
+# Same list as deny.toml [advisories] ignore; details in docs/DEPENDENCIES.md.
+# rsa (all versions incl. 0.10.0-rc.*): Marvin timing side channel, no fixed release; the rc does NOT
+# fix it. This is a risk acceptance, not a measured absence of leakage. Private-key use: SSH login with
+# an RSA user key signs once per authentication (core/src/ssh_auth.rs); RDP pulls rsa via picky/sspi
+# (CredSSP/TLS public-key operations; private-key use there is smartcard emulation, not offered).
+# Mitigation: prefer Ed25519 keys. Review 2027-02-01 or on an rsa fix.
+RUSTSEC-2023-0071

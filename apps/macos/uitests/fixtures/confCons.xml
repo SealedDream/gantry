@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hand-made fixture in the mRemoteNG confCons.xml 2.6 shape. No real hosts or secrets. -->
+<mrng:Connections xmlns:mrng="http://mremoteng.org" Name="Connections" Export="false" EncryptionEngine="AES" BlockCipherMode="GCM" KdfIterations="1000" FullFileEncryption="false" Protected="secret-cipher" ConfVersion="2.6">
+    <Node Name="Servers" Type="Container" Expanded="true" Descr="" Icon="mRemoteNG" Username="" Domain="" Password="" Hostname="" Protocol="SSH2" Port="22">
+        <Node Name="web01" Type="Connection" Descr="" Hostname="web01.lan" Protocol="SSH2" Port="2222" Username="admin" Password="" PreExtApp="calc.exe" PostExtApp="calc.exe" />
+        <Node Name="Windows" Type="Container" Username="ops" Domain="CORP" Protocol="RDP" Port="3389">
+            <Node Name="dc01" Type="Connection" Descr="Domain controller&#xA;primary" Hostname="dc01.corp.lan" Protocol="RDP" Port="3389" Password="secret-cipher" InheritUsername="True" InheritDomain="True" InheritPassword="True" />
+            <Node Name="intranet" Type="Connection" Hostname="intranet.lan" Protocol="HTTPS" Port="8443" />
+            <Node Name="legacy-raw" Type="Connection" Hostname="10.0.0.9" Protocol="RAW" Port="4000" />
+        </Node>
+        <Node Name="switch" Type="Connection" Hostname="10.0.0.2" Protocol="Telnet" Port="23" />
+        <Node Name="old-unix" Type="Connection" Hostname="10.0.0.3" Protocol="Rlogin" Port="513" />
+        <Node Name="badport" Type="Connection" Hostname="10.0.0.4" Protocol="SSH2" Port="70000" />
+        <Node Name="badhost" Type="Connection" Hostname="-oProxyCommand=calc.exe" Protocol="SSH2" />
+    </Node>
+    <Node Name="vnc-lab" Type="Connection" Hostname="vnc.lan" Protocol="VNC" Port="5900" />
+    <Node Name="tool" Type="Connection" Hostname="x" Protocol="IntApp" />
+</mrng:Connections>

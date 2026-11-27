@@ -1,0 +1,66 @@
+schema = 1
+id = "dev.gantry.proxmox"
+name = "Proxmox VE"
+version = "0.5.0"
+api = "1.6"
+publisher = "Gantry"
+description = "Proxmox VE nodes and guests: state, CPU, memory, snapshots; connect by SSH, RDP or VNC. Read-only unless allowed."
+license = "Apache-2.0"
+repository = "https://github.com/SealedDream/gantry/tree/main/plugins/official/proxmox"
+
+[permissions]
+http = "entry"
+open = ["ssh", "rdp", "vnc"]
+library = "propose"
+
+[http]
+paths = ["/api2/json/"]
+methods = ["GET", "POST", "DELETE"]
+auth = { header = "Authorization", format = "PVEAPIToken={user}={secret}" }
+
+# "Proxmox VE (password)": the core logs in with the entry's user (user@realm) and password,
+# keeps the ticket, and sends it as the PVEAuthCookie; a 401 (expired ticket) logs in again once.
+# The core sends no CSRFPreventionToken, which Proxmox needs for POST and DELETE with a ticket,
+# so this type has no "Allow changes" field and stays read-only.
+[http.session]
+login_path = "/api2/json/access/ticket"
+login_body = '{"username":"{user}","password":"{secret}"}'
+content_type = "application/json"
+cookie = "PVEAuthCookie"
+ticket = "data.ticket"
+
+# Only the QEMU guest agent's interface addresses count as reported by the server: never
+# names, descriptions or tags, which the token's owner can write.
+[open]
+address_fields = [
+  { path = "/api2/json/nodes/*/qemu/*/agent/network-get-interfaces", fields = ["data.result[].ip-addresses[].ip-address"] },
+]
+
+[[connection_types]]
+id = "pve"
+name = "Proxmox VE"
+default_port = 8006
+login = "auth"
+
+# Snapshots (PVE-SNAP): Take, Rollback and Delete, each confirmed. The token needs VM.Snapshot
+# (and VM.Snapshot.Rollback for rollback) on the guests; PVEAuditor alone stays read-only.
+[[connection_types.fields]]
+key = "allow-changes"
+label = "Allow changes (snapshots)"
+kind = "toggle"
+
+[[connection_types]]
+id = "pve-password"
+name = "Proxmox VE (password)"
+default_port = 8006
+login = "session"
+
+[[commands]]
+id = "refresh"
+title = "Refresh"
+on = "connection:pve"
+
+[[commands]]
+id = "refresh-password"
+title = "Refresh"
+on = "connection:pve-password"

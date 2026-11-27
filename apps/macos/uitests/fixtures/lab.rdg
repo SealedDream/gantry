@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RDCMan programVersion="2.7" schemaVersion="3">
+  <file>
+    <properties><name>Lab</name></properties>
+    <group>
+      <properties><name>Prod &amp; DR</name></properties>
+      <server>
+        <properties><name>srv1.example.com</name><displayName>SRV1</displayName></properties>
+        <logonCredentials inherit="None"><profileName scope="Local">Custom</profileName><userName>admin</userName><password>AQAAANCMnd8BFdER</password><domain>CORP</domain></logonCredentials>
+        <connectionSettings inherit="None"><port>3390</port></connectionSettings>
+      </server>
+      <group><properties><name>Sub</name></properties>
+        <server><properties><name>srv2</name></properties></server>
+      </group>
+    </group>
+  </file>
+</RDCMan>

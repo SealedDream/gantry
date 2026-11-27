@@ -1,0 +1,23 @@
+# PLUG-09: a hostile plugin for the core's hostile and conformance suites
+# (core/tests/plugin_hostile_tests.rs). The view name picks what it does. Never shipped.
+[package]
+name = "bastion-hostile-plugin"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+bastion-plugin-sdk = { path = "../../../../plugins/sdk" }
+
+[profile.release]
+opt-level = "s"
+strip = true
+panic = "abort"
+codegen-units = 1
+
+# Its own workspace, like the template.
+[workspace]

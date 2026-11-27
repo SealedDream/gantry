@@ -1,0 +1,8 @@
+{"Objects":[
+  {"Type":"Folder","Name":"Prod","Objects":[
+    {"Type":"RemoteDesktopConnection","Name":"dc01","ComputerName":"10.1.0.10","Username":"CORP\\admin","Password":"not-a-real-password"},
+    {"Type":"TerminalConnection","Name":"web","ComputerName":"web.prod","Port":2222,"Path":"Linux/Web"}
+  ]},
+  {"Type":"WebConnection","Name":"portal","URL":"https://portal.example.com"},
+  {"Type":"Credential","Name":"svc"}
+]}

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- PLUG-06c (Native Windows): console checks of the SQL editor's logic (SqlEditorModel.cs) and of the core's
+       tokenizer and completion exports through bastion_cabi (C ABI 136). No window, no network.
+       Run: sql-editor-console-test.ps1, or dotnet run with: core path or no-core. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Bastion.Tests</RootNamespace>
+    <AssemblyName>sql-editor-console</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <!-- The app's own files, compiled as they are. HighlightNative.cs needs only LibraryClient's string helpers,
+         which the stub below provides, so the test does not pull in the whole interop layer. -->
+    <Compile Include="..\..\SqlEditorModel.cs" Link="SqlEditorModel.cs" />
+    <Compile Include="..\..\Interop\HighlightNative.cs" Link="Interop\HighlightNative.cs" />
+    <Compile Include="LibraryClientStub.cs" />
+  </ItemGroup>
+</Project>

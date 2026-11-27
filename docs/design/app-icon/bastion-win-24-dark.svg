@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <title>Bastion 24 px</title>
+  <!-- Simplified for 24 px: whole-pixel bars, thicker prompt. -->
+  <rect x="6" y="2" width="12" height="3" rx=".5" fill="#8B5CF6"/>
+  <rect x="3" y="5" width="18" height="3" rx=".5" fill="#3B82F6"/>
+  <rect x="1" y="8" width="22" height="14" rx="1" fill="#FFFFFF"/>
+  <path d="M5 11.5 9 15 5 18.5" fill="none" stroke="#1E1B4B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="11" y="17" width="6" height="2" rx="1" fill="#1E1B4B"/>
+</svg>

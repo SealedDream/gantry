@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- SEC-6: RDP server clipboard text must not cross to another session. Compiles RdpClipboardOrigin.cs as the
+       app ships it. No window, no core, no network. Run: rdp-clipboard-origin-console-test.ps1. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Bastion.Tests</RootNamespace>
+    <AssemblyName>rdp-clipboard-origin-console</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="..\..\RdpClipboardOrigin.cs" Link="RdpClipboardOrigin.cs" />
+  </ItemGroup>
+</Project>

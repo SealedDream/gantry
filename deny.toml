@@ -1,0 +1,41 @@
+# Dependency policy for every shipped crate (Codex D04). Run: sh scripts/deny.sh (all lockfiles).
+# Reasons and review dates for every exception: docs/DEPENDENCIES.md. Change this file only with
+# a reason in the PR.
+
+[graph]
+# Only what ships: macOS (Apple silicon + Intel) and Windows x64. Linux-only GTK/zbus crates are
+# out of scope.
+targets = ["aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-pc-windows-msvc"]
+
+[advisories]
+# Vulnerabilities and unmaintained crates fail unless listed here.
+unmaintained = "all"
+yanked = "deny"
+ignore = [
+  { id = "RUSTSEC-2023-0071", reason = "rsa Marvin timing: no fixed release (rc included); SSH RSA user-key signing once per login, RDP via picky/sspi; prefer Ed25519. Review 2027-02-01" },
+  { id = "RUSTSEC-2026-0374", reason = "basic-toml unmaintained: build-time only (askama_derive in UniFFI binding generation). Review 2027-02-01" },
+  { id = "RUSTSEC-2026-0441", reason = "pin-utils archived: via async-dnssd (RDP discovery), pin_mut! only, no vulnerability. Review 2027-02-01" },
+  { id = "RUSTSEC-2023-0089", reason = "atomic-polyfill unmaintained: via heapless; native atomics on shipped targets. Review 2027-02-01" },
+]
+
+[licenses]
+# Permissive licences plus MPL-2.0 (file-level copyleft: unmodified sources, notice shipped).
+allow = [
+  "0BSD", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "BSL-1.0", "CC0-1.0", "CDLA-Permissive-2.0",
+  "ISC", "MIT", "MIT-0", "MPL-2.0", "Unicode-3.0", "Unlicense", "Zlib", "bzip2-1.0.6",
+  # Wasmtime and Cranelift (plugin host): Apache-2.0 plus an extra permission (accepted 2026-11-14).
+  "Apache-2.0 WITH LLVM-exception",
+]
+confidence-threshold = 0.9
+exceptions = []
+
+[bans]
+multiple-versions = "allow"
+wildcards = "deny"
+allow-wildcard-paths = true
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []

@@ -1,0 +1,12 @@
+# The plugin author's side of the Bastion plugin system (spec `docs/specs/plugins.md`, section 8).
+# Not part of the app build. `template/` is its own workspace: it is the starter project authors copy.
+[workspace]
+resolver = "2"
+members = ["sdk", "testhost", "official/postgres"]
+exclude = ["template"]
+
+[workspace.package]
+version = "1.0.0"
+edition = "2021"
+publish = false
+license = "MIT OR Apache-2.0"

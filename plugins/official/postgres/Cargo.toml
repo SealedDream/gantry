@@ -1,0 +1,25 @@
+# The Official PostgreSQL plugin, stage 1 (spec `docs/specs/plugins.md`, section 11; PLUG-08).
+# Build: cargo build --release --target wasm32-wasip2 -p bastion-plugin-postgres
+[package]
+name = "bastion-plugin-postgres"
+version = "1.0.1"
+edition.workspace = true
+publish.workspace = true
+license = "Apache-2.0"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+bastion-plugin-sdk = { path = "../../sdk" }
+# Already in this lockfile (the SDK's version): binds `wasi:random/random` for the SCRAM nonce.
+wit-bindgen = "0.63.0"
+# SCRAM-SHA-256 login (owner approved hmac, pbkdf2 and base64 on 2026-11-20; sha2 was already
+# in this lockfile).
+sha2 = { version = "0.10", default-features = false }
+hmac = { version = "0.12", default-features = false }
+pbkdf2 = { version = "0.12", default-features = false, features = ["hmac"] }
+base64 = { version = "0.22", default-features = false, features = ["alloc"] }
+# Constant-time compare behind `hmac`'s `verify_slice` (owner approved `subtle` 2.x on
+# 2026-11-20). Pinned here so the version range is explicit; default features off.
+subtle = { version = "2", default-features = false }

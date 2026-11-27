@@ -1,0 +1,20 @@
+{
+  "format": "bastion-document",
+  "version": 1,
+  "id": "e8ca3512-e8fc-497d-952a-423ef715b94a",
+  "name": "Personal",
+  "revision": 1,
+  "protection": {
+    "kdf": "device",
+    "salt": "",
+    "m_cost": 0,
+    "t_cost": 0,
+    "key_nonce": "",
+    "wrapped_key": "",
+    "biometric": false
+  },
+  "sealed": {
+    "nonce": "M0U1NHwc0oapPr01z0Ntx2dYMv5iiWg2",
+    "ciphertext": "58ADtaAM+OBcf2z3gfUoWOvJy642x9vaMybVds3AOPl42cO9ybX7GEewF9N7q0g7Rp2SfaTZptHuhN0hJYyGMPFKiBeXICfqVYi60hj0WuMH8sS7pZLdiiTtxvsD9aUHAF/AbQuF5AFRZc3j8mWeHBf0TJzVmAMVDZjiEWxH3R4Gl1NkVWJbZyq9u7the+HwkTfLYg6Atkk6361VFEbwDOpd+QSibQKa4OpNhoBAh7N9KROFpOl5cQzuSPMC2dYlpstmcbPnV/s2SzbcVAeANUXlXqc4HKw0mjYe8q6NfW7/9UJ04RlVsj5IvLPF5K2c6P9B2WL0lgp5TQ9LrEOCPhXtmeHsq49SV+RRTEydolLiTKAYCprCKUzBZHCsFE15vkV72C7I+FZi04MX+BZ9aJd45ox92sGwuXZr9bC55Bw9TmS84LoIUnw1qzq7la63wqI0SXJFfpo+l36j3BDce7T0FcVXbamH2DtMNamFFReOemxAoDQHEldl2Gy7lKKZbh1E20EwtLfbanLHwfXSFmeZ8mIJt9tZavRc4DGqFW+4RKJo8Qc0sJZh09zqDWcf0giNKcFHBWSNr8KmMhyJYm5EeyPwmDDS2ZTmJCUxasYqRQYS9YigFS6zFWqqS/Vn5UJwh4LLetZO5InUH+qCrZcE4su04Q8T1//dVoDEFXqm/CTEA4apnbdADAbRi82GEOdYOdWcK7x6hcaOjYqn8LA0jqX7t9JuVd/Aa1FcFHO+s6bIlSIkOYEb0Mx4RverVASaF1tuOrDDg0s0AV31onKSAAxwMNblzguPlWG6pZ1tPjTpxcKjziBasYAppMANSKreFrPk3yYSLcgbmKP15iUGJdmuqKn3"
+  }
+}

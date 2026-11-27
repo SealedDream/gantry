@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Unit tests for remembered-login reuse (SEC-03, Native Windows). A plain console program: no window,
+    no desktop session, no NuGet packages. It compiles the app's LoginReuseTimes.cs and, given the dll, checks it against
+    the core rule in bastion_cabi.dll (C ABI 105). Without an argument only the app-side rules run.
+
+    Run in this folder: dotnet build -c Release, then
+          bin\Release\net10.0\LoginReuseUnit.exe ..\..\native\bastion_cabi.dll
+    (the path to bastion_cabi.dll is the only argument).
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Bastion.Shell.Tests</RootNamespace>
+    <AssemblyName>LoginReuseUnit</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\LoginReuseTimes.cs" Link="LoginReuseTimes.cs" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,9 @@
+schema = 1
+id = "com.example.sqledit"
+name = "SQL Editor Fixture"
+version = "0.1.0"
+api = "1.0"
+publisher = "Example"
+description = "Test fixture: one SQL editor with fixed completions; Run shows what it got."
+license = "MIT OR Apache-2.0"
+repository = "https://example.com/sqledit"

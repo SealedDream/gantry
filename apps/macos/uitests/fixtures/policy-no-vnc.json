@@ -1,0 +1,1 @@
+{"denied_protocols": ["vnc"], "require_rdp_nla": true, "forbid_osc52_write": true, "inactivity_lock_secs": 600}

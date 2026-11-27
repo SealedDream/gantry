@@ -1,0 +1,22 @@
+# A plugin for the test host's own tests: limits, WASI stubs and every permission.
+[package]
+name = "testhost-probe"
+version = "0.0.0"
+edition = "2021"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+bastion-plugin-sdk = { path = "../../../sdk" }
+
+[profile.release]
+opt-level = "s"
+strip = true
+panic = "abort"
+codegen-units = 1
+lto = true
+
+[workspace]

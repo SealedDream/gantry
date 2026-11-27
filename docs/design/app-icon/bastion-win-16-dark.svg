@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <title>Bastion 16 px</title>
+  <!-- Simplified for 16 px: whole-pixel bars, thicker prompt; square ends stay sharp at 16 px. -->
+  <rect x="4" y="1" width="8" height="2" fill="#8B5CF6"/>
+  <rect x="2" y="3" width="12" height="2" fill="#3B82F6"/>
+  <rect x="0" y="5" width="16" height="10" rx="1" fill="#FFFFFF"/>
+  <path d="M3 7.5 6 10 3 12.5" fill="none" stroke="#1E1B4B" stroke-width="1.6" stroke-linecap="square" stroke-linejoin="miter"/>
+  <rect x="8" y="11" width="4" height="2" fill="#1E1B4B"/>
+</svg>

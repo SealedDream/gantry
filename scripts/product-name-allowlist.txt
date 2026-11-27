@@ -1,0 +1,25 @@
+# Literals that keep the old product name on purpose (scripts/check-product-name.sh). One `path: literal` per line.
+# Migration from the old name: the old folder and document names.
+apps/macos/Sources/Bastion/AppRename.swift: "Bastion"
+apps/windows/AppRename.cs: "Bastion"
+# Crash reports of builds from before the rename are still collected.
+apps/macos/Sources/Bastion/Diagnostics.swift: "Bastion"
+# Icon asset file names (not shown).
+apps/windows/MainWindow.TitleBar.cs: "Bastion-dark.ico"
+apps/windows/MainWindow.TitleBar.cs: "Bastion.ico"
+# Keychain items stored under the old service are read, then copied to "Gantry".
+core-ffi/src/credentials.rs: "Bastion"
+core-ffi/src/documents.rs: "Bastion"
+# Windows AppContainer profile of the plugin helper: renaming makes a new profile, never shown.
+core/src/plugin/host/spawn.rs: "Bastion.PluginHelper"
+# A managed policy an administrator installed under the old name still applies.
+core/src/policy.rs: "/Library/Application Support/Bastion/policy.json"
+core/src/policy.rs: "Bastion"
+core/src/policy.rs: "/etc/bastion/policy.json"
+# Session logs written before the rename are still recognised.
+core/src/sessionlog.rs: "# Bastion session log"
+# Migration log lines name the old product on purpose.
+apps/macos/Sources/Bastion/AppRename.swift: "Gantry: a Gantry library exists; Bastion data left as it is"
+apps/windows/AppRename.cs: "Gantry: a Gantry library exists; Bastion data left as it is"
+# Icon file names stay (internal asset names).
+apps/windows/MainWindow.StartWindow.cs: "Bastion.ico"

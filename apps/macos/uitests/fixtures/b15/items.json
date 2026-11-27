@@ -1,0 +1,5 @@
+{"Objects":[
+ {"Type":"TerminalConnection","Name":"gen-a","ComputerName":"gen-a.example.test","Username":"ops"},
+ {"Type":"Folder","Name":"Sub","Objects":[{"Type":"RemoteDesktopConnection","Name":"gen-b","ComputerName":"gen-b.example.test"}]},
+ {"Type":"TerminalConnection","Name":"bad","ComputerName":"-oProxyCommand=x"}
+]}

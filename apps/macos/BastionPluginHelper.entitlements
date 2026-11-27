@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Hardened-runtime entitlements for the plugin helper only (PLUG-01, measured 2026-11-12).
+     Wasmtime 48 with Cranelift maps code without MAP_JIT, so com.apple.security.cs.allow-jit is
+     not enough: the kernel kills the helper ("Code Signature Invalid") at the first generated
+     instruction. This one entitlement is the smallest that works. With Pulley
+     the helper needs no entitlement at all. Signed by sign-bundle.sh (PLUG-14).
+     The app's own entitlements (apps/macos/Bastion.adhoc.entitlements) stay unchanged. -->
+<plist version="1.0">
+<dict>
+  <key>com.apple.security.cs.allow-unsigned-executable-memory</key><true/>
+</dict>
+</plist>

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Owner 2026-11-23: console checks of the Bastion -> Gantry data folder migration (AppRename.cs), compiled as the app ships them.
+       No window, no core, no network. Run: see rename-migration-console-test.ps1 (any OS with the .NET 8 SDK). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Bastion.Tests</RootNamespace>
+    <AssemblyName>rename-migration-console</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="..\..\AppRename.cs" Link="AppRename.cs" />
+  </ItemGroup>
+</Project>

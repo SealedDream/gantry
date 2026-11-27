@@ -1,0 +1,17 @@
+{"kind":"PodList","apiVersion":"v1","metadata":{"resourceVersion":"8812"},"items":[
+ {"metadata":{"name":"web-7c9f8d6b5-x2kqp","namespace":"shop","uid":"a1","creationTimestamp":"2026-11-20T08:00:00Z","labels":{"app":"web"}},
+  "spec":{"nodeName":"k3s-1","containers":[{"name":"web","image":"nginx:1.27"}]},
+  "status":{"phase":"Running","podIP":"10.42.0.12","containerStatuses":[{"name":"web","ready":true,"restartCount":2,"state":{"running":{"startedAt":"2026-11-20T08:00:05Z"}}}]}},
+ {"metadata":{"name":"worker-5d8b7-bt9zr","namespace":"shop","uid":"a2","creationTimestamp":"2026-11-23T09:55:00Z"},
+  "spec":{"nodeName":"k3s-2"},
+  "status":{"phase":"Running","containerStatuses":[{"name":"worker","ready":false,"restartCount":7,"state":{"waiting":{"reason":"CrashLoopBackOff","message":"back-off 5m0s"}}},{"name":"sidecar","ready":true,"restartCount":1,"state":{"running":{}}}]}},
+ {"metadata":{"name":"coredns-ccb96694c-9kd2m","namespace":"kube-system","creationTimestamp":"2026-11-01T00:00:00Z"},
+  "spec":{"nodeName":"k3s-1"},
+  "status":{"phase":"Running","containerStatuses":[{"name":"coredns","ready":true,"restartCount":0,"state":{"running":{}}}]}},
+ {"metadata":{"name":"pending-job-abcde","namespace":"shop","creationTimestamp":"2026-11-23T09:59:30Z"},
+  "spec":{},
+  "status":{"phase":"Pending"}},
+ {"metadata":{"name":"evicted-1","namespace":"shop","creationTimestamp":"2026-11-22T10:00:00Z"},
+  "spec":{"nodeName":"k3s-2"},
+  "status":{"phase":"Failed","reason":"Evicted"}}
+]}

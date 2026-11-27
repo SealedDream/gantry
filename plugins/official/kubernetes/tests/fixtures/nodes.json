@@ -1,0 +1,4 @@
+{"kind":"NodeList","apiVersion":"v1","items":[
+ {"metadata":{"name":"k3s-1","creationTimestamp":"2026-11-01T00:00:00Z"},"status":{"conditions":[{"type":"MemoryPressure","status":"False"},{"type":"Ready","status":"True"}],"nodeInfo":{"kubeletVersion":"v1.31.4+k3s1"}}},
+ {"metadata":{"name":"k3s-2","creationTimestamp":"2026-11-02T00:00:00Z"},"status":{"conditions":[{"type":"Ready","status":"Unknown"}],"nodeInfo":{"kubeletVersion":"v1.31.4+k3s1"}}}
+]}

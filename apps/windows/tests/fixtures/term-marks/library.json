@@ -1,0 +1,16 @@
+{
+ "schema": 1,
+ "id": "7e7a0000-0000-4000-8000-000000000001",
+ "name": "Library",
+ "revision": 0,
+ "root": {
+  "id": "7e7a0000-0000-4000-8000-000000000002",
+  "name": "Root",
+  "children": [
+   {"kind": "connection", "id": "7e7a0000-0000-4000-8000-000000000003", "name": "prod-shell", "protocol": "local", "host": "",
+    "settings": {"port": null, "username": null}, "tags": ["Prod"], "favorite": false},
+   {"kind": "connection", "id": "7e7a0000-0000-4000-8000-000000000004", "name": "plain-shell", "protocol": "local", "host": "",
+    "settings": {"port": null, "username": null}, "tags": ["preprod"], "favorite": false}
+  ]
+ }
+}

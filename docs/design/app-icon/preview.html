@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Bastion app icon preview</title>
+<style>
+body{margin:0;font:13px -apple-system,"Segoe UI",sans-serif;background:#e5e7eb;color:#111}
+h2{margin:18px 16px 6px;font-size:14px}
+.row{display:flex;flex-wrap:wrap;gap:12px;padding:0 16px}
+.pane{border-radius:8px;padding:14px;min-width:300px;flex:1}
+.light{background:#f5f5f7;color:#111}.dark{background:#1e1e1e;color:#eee}
+.lbl{font-size:11px;opacity:.7;margin-bottom:8px}
+.dock{display:flex;gap:10px;align-items:end;padding:8px 12px;border-radius:18px;width:max-content}
+.light .dock{background:rgba(255,255,255,.6);box-shadow:0 0 0 1px #0002}.dark .dock{background:rgba(60,60,60,.7);box-shadow:0 0 0 1px #fff2}
+.ph{border-radius:22%;background:#9993}
+.sizes{display:flex;gap:16px;align-items:end;flex-wrap:wrap}.sizes div{text-align:center;font-size:10px}
+.finder .item{display:inline-flex;flex-direction:column;align-items:center;margin:6px 12px;font-size:12px}
+.list{display:flex;align-items:center;gap:6px;padding:3px 0}
+.taskbar{display:flex;gap:6px;align-items:center;justify-content:center;height:48px;border-radius:4px}
+.light .taskbar{background:#f3f3f3cc;box-shadow:0 -1px #0001}.dark .taskbar{background:#202020}
+.tb{width:40px;height:40px;border-radius:4px;display:grid;place-items:center}.tb.on{background:#8882}
+.tb.on::after{content:"";display:block}
+.start{border-radius:8px;padding:16px;display:grid;grid-template-columns:repeat(6,1fr);gap:8px;width:420px}
+.light .start{background:#f9f9f9;box-shadow:0 0 0 1px #0001}.dark .start{background:#2c2c2c}
+.start div{display:flex;flex-direction:column;align-items:center;font-size:11px;gap:4px;padding:6px}
+img{display:block}
+</style></head><body>
+<p>Sharp revision (2026-11-26): lighter back bars #8B5CF6 / #3B82F6, white front window, round prompt chevron and rounded underscore. 16 px keeps square ends.</p>
+<h2>macOS — Dock (Big Sur and later)</h2>
+<div class="row">
+ <div class="pane light"><div class="lbl">Light, 64 pt</div><div class="dock"><div class="ph" style="width:64px;height:64px"></div><img src="bastion-mac.svg" width="64"><div class="ph" style="width:64px;height:64px"></div></div></div>
+ <div class="pane dark"><div class="lbl">Dark, 64 pt</div><div class="dock"><div class="ph" style="width:64px;height:64px"></div><img src="bastion-mac.svg" width="64"><div class="ph" style="width:64px;height:64px"></div></div></div>
+</div>
+<h2>macOS — Finder, every .icns size</h2>
+<div class="row">
+ <div class="pane light finder"><div class="lbl">Light</div><div class="sizes" id="ml"></div><div class="list"><img src="bastion-mac.svg" width="16">Bastion.app</div></div>
+ <div class="pane dark finder"><div class="lbl">Dark</div><div class="sizes" id="md"></div><div class="list"><img src="bastion-mac.svg" width="16">Bastion.app</div></div>
+</div>
+<h2>Windows 11 — taskbar (24 px)</h2>
+<div class="row">
+ <div class="pane light"><div class="lbl">Light taskbar: Bastion.ico</div><div class="taskbar"><div class="tb"><div class="ph" style="width:24px;height:24px"></div></div><div class="tb on"><img src="bastion-win-24.svg" width="24"></div><div class="tb"><div class="ph" style="width:24px;height:24px"></div></div></div></div>
+ <div class="pane dark"><div class="lbl">Dark taskbar: Bastion-dark.ico</div><div class="taskbar"><div class="tb"><div class="ph" style="width:24px;height:24px"></div></div><div class="tb on"><img src="bastion-win-24-dark.svg" width="24"></div><div class="tb"><div class="ph" style="width:24px;height:24px"></div></div></div></div>
+</div>
+<h2>Windows 11 — Start menu (32 px tiles)</h2>
+<div class="row">
+ <div class="pane light"><div class="start"><div><img src="bastion-win.svg" width="32">Bastion</div><div><div class="ph" style="width:32px;height:32px"></div>App</div><div><div class="ph" style="width:32px;height:32px"></div>App</div></div></div>
+ <div class="pane dark"><div class="start"><div><img src="bastion-win-dark.svg" width="32">Bastion</div><div><div class="ph" style="width:32px;height:32px"></div>App</div><div><div class="ph" style="width:32px;height:32px"></div>App</div></div></div>
+</div>
+<h2>Windows 11 — Explorer, every .ico size</h2>
+<div class="row">
+ <div class="pane light"><div class="lbl">Light (Bastion.ico)</div><div class="sizes" id="wl"></div><div class="list"><img src="bastion-win-16.svg" width="16">Bastion.exe</div></div>
+ <div class="pane dark"><div class="lbl">Dark (Bastion-dark.ico)</div><div class="sizes" id="wd"></div><div class="list"><img src="bastion-win-16-dark.svg" width="16">Bastion.exe</div></div>
+</div>
+<script>
+const put=(id,sizes,src)=>{const el=document.getElementById(id);for(const s of sizes){const d=document.createElement('div');const i=document.createElement('img');i.src=src(s);i.width=Math.min(s,256);d.append(i,s+' px');el.append(d)}};
+const mac=[16,32,64,128,256,512,1024];put('ml',mac,()=> 'bastion-mac.svg');put('md',mac,()=> 'bastion-mac.svg');
+const win=[16,20,24,32,40,48,64,256];const w=(d)=>s=>s<=16?`bastion-win-16${d}.svg`:s<=24?`bastion-win-24${d}.svg`:`bastion-win${d}.svg`;
+put('wl',win,w(''));put('wd',win,w('-dark'));
+</script></body></html>

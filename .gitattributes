@@ -1,0 +1,5 @@
+# Windows batch files must keep CRLF: cmd.exe can mis-handle labels and goto with LF endings.
+*.cmd text eol=crlf
+
+# Test fixtures are compared byte for byte: keep them exactly as committed (LF) on every platform.
+core/tests/fixtures/** -text

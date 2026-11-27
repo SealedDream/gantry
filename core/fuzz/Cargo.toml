@@ -1,0 +1,166 @@
+[package]
+name = "bastion-core-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+tempfile = "3"
+serde_json = "1"
+
+[dependencies.bastion-core]
+path = ".."
+
+[workspace]
+
+
+[[bin]]
+name = "openssh_config"
+path = "fuzz_targets/openssh_config.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "csv_import"
+path = "fuzz_targets/csv_import.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "rdp_file"
+path = "fuzz_targets/rdp_file.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "putty_reg"
+path = "fuzz_targets/putty_reg.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "royal_json"
+path = "fuzz_targets/royal_json.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "rdcman"
+path = "fuzz_targets/rdcman.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "mremoteng"
+path = "fuzz_targets/mremoteng.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "decode_text"
+path = "fuzz_targets/decode_text.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sshconfig_str"
+path = "fuzz_targets/sshconfig_str.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sshconfig_discover"
+path = "fuzz_targets/sshconfig_discover.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "quickconnect"
+path = "fuzz_targets/quickconnect.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "parse_jump"
+path = "fuzz_targets/parse_jump.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "forward_spec"
+path = "fuzz_targets/forward_spec.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "docfile_parse"
+path = "fuzz_targets/docfile_parse.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "plugin_manifest"
+path = "fuzz_targets/plugin_manifest.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "plugin_package"
+path = "fuzz_targets/plugin_package.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "plugin_imports"
+path = "fuzz_targets/plugin_imports.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "plugin_to_core"
+path = "fuzz_targets/plugin_to_core.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "plugin_to_helper"
+path = "fuzz_targets/plugin_to_helper.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "plugin_frame"
+path = "fuzz_targets/plugin_frame.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "plugin_app_event"
+path = "fuzz_targets/plugin_app_event.rs"
+test = false
+doc = false
+bench = false

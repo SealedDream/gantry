@@ -1,0 +1,225 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Bastion for Windows: a WinUI 3 shell over bastion-core, reached through core-cabi's C ABI.
+    Unpackaged and self-contained: no MSIX and no separately installed Windows App Runtime.
+    Runs on Windows 10 1809 (build 17763) and later, including Windows 11; no Win11-only APIs.
+
+    Build:  powershell -File build-core.ps1      (builds ..\core-cabi and copies bastion_cabi.dll to native\)
+            dotnet build -c Release -p:Platform=x64     (development)
+            dotnet publish -c Release -p:Platform=x64 -o <dir>   (what ships: trimmed, ReadyToRun)
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>Bastion.Shell</RootNamespace>
+    <AssemblyName>Gantry</AssemblyName>
+    <Product>Gantry Terminal</Product>
+    <AssemblyTitle>Gantry Terminal</AssemblyTitle>
+    <Company>Gantry contributors</Company>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Generated from docs/design/app-icon (make-windows-icons.sh, 16–256 px); Bastion-dark.ico is the dark-taskbar variant. -->
+    <ApplicationIcon>Assets\Bastion.ico</ApplicationIcon>
+    <Platforms>x64</Platforms>
+    <Platform Condition="'$(Platform)' == ''">x64</Platform>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <UseWinUI>true</UseWinUI>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <SelfContained>true</SelfContained>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- WIN-AOT: reflection that Native AOT cannot do (JSON without generated metadata and the like) fails every build,
+         ReadyToRun included, instead of crashing the AOT app at run time. tests\aot-json-check.py also checks that each
+         JSON type is listed in Interop\AotJson.cs. -->
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+    <WarningsAsErrors>$(WarningsAsErrors);IL2026;IL3050</WarningsAsErrors>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <!-- Smaller download and faster start (owner budget: cold <= 1.0 s, warm <= 0.5 s; see tests\startup-budget.ps1).
+         The UI is English only, so the runtime and Windows App SDK resource folders for other languages are left out.
+         Publish (dotnet publish -c Release) precompiles to native code (ReadyToRun) and trims unused framework code. -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>partial</TrimMode>
+    <!-- partial: only framework assemblies that declare themselves trimmable are trimmed; Bastion's own types stay whole.
+         The interop DTOs use reflection-based System.Text.Json, so keep that on. -->
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+    <!-- Start-up: use Windows' own NLS globalization (same culture rules, no ICU load) and skip PGO instrumentation
+         of the ReadyToRun code, which only pays off in long-running servers. -->
+    <TieredPGO>false</TieredPGO>
+      <!-- BASTION_VERSION (set by the release scripts from the tag) is also compiled into the core, so the file version
+         and what Check for Updates reports as installed are the same value. -->
+    <Version Condition="'$(BASTION_VERSION)' != ''">$(BASTION_VERSION)</Version>
+    <Version Condition="'$(BASTION_VERSION)' == ''">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)..\..\core-cabi\Cargo.toml')), '(?m)^version = "([0-9.]+)"').Groups[1].Value)</Version>
+  </PropertyGroup>
+  <!-- WIN-UI-DRIVER-GATE: the UI test driver (SnapshotRunner, BASTION_SNAPSHOT*) and the test seams (TestHooks.cs)
+       are compiled in only for test builds: dotnet build -c Release -p:Platform=x64 -p:BastionTestHooks=true.
+       A test build goes to bin\testhooks\ and carries TEST-HOOKS-BUILD.txt next to Bastion.exe; package-windows.ps1
+       refuses such a folder. Owner and shipped builds never set the property and ignore those variables. -->
+  <PropertyGroup Condition="'$(BastionTestHooks)' == 'true'">
+    <DefineConstants>$(DefineConstants);BASTION_TEST_HOOKS</DefineConstants>
+    <BaseOutputPath>bin\testhooks\</BaseOutputPath>
+    <!-- PerfEvents (ETW markers for WPR/WPA) needs EventSource kept by the trimmer; owner builds keep the default (off). -->
+    <EventSourceSupport>true</EventSourceSupport>
+  </PropertyGroup>
+  <Target Name="BastionTestHooksMarker" AfterTargets="Build" Condition="'$(BastionTestHooks)' == 'true'">
+    <WriteLinesToFile File="$(OutDir)TEST-HOOKS-BUILD.txt" Lines="Test build with BASTION_TEST_HOOKS: never give this to the owner or ship it." Overwrite="true" />
+  </Target>
+  <!-- BUILD-STAMP: the git commit (and "-dirty" when tracked files differ from it) goes into the assembly as
+       AssemblyMetadata("BastionCommit") and into BUILD-STAMP.txt next to Bastion.exe, so a test script can refuse a
+       stale build without starting the UI (tests\build-stamp.ps1). Outside a git checkout the stamp is $(BASTION_BUILD_COMMIT) when that environment variable is set
+       (a build from the public export tarball), else "unknown". -->
+  <Target Name="BastionReadCommit" BeforeTargets="GetAssemblyAttributes;CoreCompile">
+    <Exec Command="git rev-parse HEAD" ConsoleToMSBuild="true" StandardOutputImportance="low" IgnoreExitCode="true" ContinueOnError="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="BastionCommitSha" />
+    </Exec>
+    <Exec Command="git status --porcelain --untracked-files=no" ConsoleToMSBuild="true" StandardOutputImportance="low" IgnoreExitCode="true" ContinueOnError="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="BastionCommitChanges" />
+    </Exec>
+    <PropertyGroup>
+      <BastionCommitSha Condition="'$(BastionCommitSha.Length)' != '40' And '$(BASTION_BUILD_COMMIT)' != ''">$(BASTION_BUILD_COMMIT)</BastionCommitSha>
+      <BastionCommitSha Condition="'$(BastionCommitSha.Length)' != '40' And '$(BASTION_BUILD_COMMIT)' == ''">unknown</BastionCommitSha>
+      <BastionCommit>$(BastionCommitSha)</BastionCommit>
+      <BastionCommit Condition="'$(BastionCommitSha.Length)' == '40' And '$(BastionCommitChanges)' != ''">$(BastionCommitSha)-dirty</BastionCommit>
+    </PropertyGroup>
+    <ItemGroup>
+      <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+        <_Parameter1>BastionCommit</_Parameter1>
+        <_Parameter2>$(BastionCommit)</_Parameter2>
+      </AssemblyAttribute>
+    </ItemGroup>
+  </Target>
+  <Target Name="BastionWriteStamp" AfterTargets="Build" DependsOnTargets="BastionReadCommit">
+    <WriteLinesToFile File="$(OutDir)BUILD-STAMP.txt" Lines="$(BastionCommit)" Overwrite="true" />
+  </Target>
+  <!-- Publish (AOT and ReadyToRun) writes to PublishDir, not OutDir: stamp it too, or stamped tests exit 2. -->
+  <Target Name="BastionPublishStamp" AfterTargets="Publish" DependsOnTargets="BastionReadCommit">
+    <WriteLinesToFile File="$(PublishDir)BUILD-STAMP.txt" Lines="$(BastionCommit)" Overwrite="true" />
+    <WriteLinesToFile Condition="'$(BastionTestHooks)' == 'true'" File="$(PublishDir)TEST-HOOKS-BUILD.txt" Lines="Test build with BASTION_TEST_HOOKS: never give this to the owner or ship it." Overwrite="true" />
+  </Target>
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="System.Globalization.UseNls" Value="true" />
+  </ItemGroup>
+
+  <!-- WIN-STARTUP packaging (opt-in until measured on the speed VM; the defaults ship as before):
+       -p:BastionSplitSdk=true   reference only the Windows App SDK components Bastion uses, at the exact versions the
+                                 1.8.260921001 metapackage pins, leaving out AI, ML and Widgets (fewer files to load).
+       -p:BastionComposite=true  publish one composite ReadyToRun image of the app and the framework. -->
+  <ItemGroup Condition="'$(BastionSplitSdk)' != 'true'">
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260921001" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(BastionSplitSdk)' == 'true'">
+    <PackageReference Include="Microsoft.WindowsAppSDK.Base" Version="[1.8.251216001]" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Foundation" Version="[1.8.260803002]" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.InteractiveExperiences" Version="[1.8.260708001]" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" Version="[1.8.260803003]" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.DWrite" Version="[1.8.25122902]" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Runtime" Version="[1.8.260921001]" />
+  </ItemGroup>
+  <!-- WIN-AOT: Native AOT is the default publish (speed VM, first launch after reboot: 11.5 s main, 1.5 s AOT).
+       -p:BastionAot=false falls back to ReadyToRun. -->
+  <PropertyGroup Condition="'$(BastionAot)' == ''">
+    <BastionAot>true</BastionAot>
+  </PropertyGroup>
+  <!-- WIN-AOT: -p:BastionAot=true publishes with Native AOT instead of
+       ReadyToRun: no JIT and a much smaller runtime start. Trim stays partial so Bastion's own types (reflection JSON,
+       XAML) keep their metadata. -->
+  <PropertyGroup Condition="'$(BastionAot)' == 'true'">
+    <PublishAot>true</PublishAot>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <IlcGenerateStackTraceData>true</IlcGenerateStackTraceData>
+    <!-- .NET 10: full trimming under AOT, as the Windows App SDK supports it (CsWinRT generates what XAML needs). The
+         ReadyToRun build roots whole WinUI/WebView2 projections (below); under AOT that made ilc 10.0.15 build metadata
+         for every field of those assemblies and crash (InvalidCastException in EnsureLoadableType). All JSON is
+         source-generated (Interop/AotJson.cs), so reflection JSON is off. -p:BastionAotRootProjections=true brings
+         the roots back for a test. -->
+    <TrimMode>full</TrimMode>
+    <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
+  </PropertyGroup>
+  <!-- XAML creates Bastion's own controls (LibraryRow and others) by type name at run time; with full trimming they were
+       removed and MainWindow.InitializeComponent failed ("Cannot create instance of type 'Bastion.Shell.LibraryRow'").
+       Bastion's own assembly is kept whole; the framework and the projections are still trimmed. -->
+  <ItemGroup Condition="'$(BastionAot)' == 'true'">
+    <TrimmerRootAssembly Include="Gantry" />
+  </ItemGroup>
+  <!-- WIN-AOT: the AOT publish leaves the self-contained Windows App SDK runtime files out of the publish folder
+       (Microsoft.WindowsAppRuntime.dll first), and the SDK's module initializer fails before Main without them.
+       Copy the native files the build put in OutDir that the publish folder lacks (managed projections excluded:
+       AOT compiles those into Bastion.exe). -->
+  <Target Name="BastionAotCopyWinAppSdkNative" AfterTargets="Publish" Condition="'$(BastionAot)' == 'true'">
+    <ItemGroup>
+      <_BastionAotNative Include="$(OutDir)Microsoft.WindowsAppRuntime*.dll;$(OutDir)Microsoft.UI*.dll;$(OutDir)Microsoft.ui.xaml.dll;$(OutDir)Microsoft.Windows*.dll;$(OutDir)*.pri;$(OutDir)**\*.mui;$(OutDir)dcompi.dll;$(OutDir)dwmcorei.dll;$(OutDir)DwmSceneI.dll;$(OutDir)marshal.dll;$(OutDir)wuceffectsi.dll;$(OutDir)CoreMessagingXP.dll;$(OutDir)Microsoft.DirectManipulation.dll;$(OutDir)Microsoft.InputStateManager.dll;$(OutDir)Microsoft.Internal.FrameworkUdk.dll;$(OutDir)WebView2Loader.dll;$(OutDir)RestartAgent.exe"
+                         Exclude="$(OutDir)*.Projection.dll;$(OutDir)Microsoft.Windows.SDK.NET.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_BastionAotNative)" DestinationFiles="@(_BastionAotNative->'$(PublishDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          Condition="!Exists('$(PublishDir)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
+  <PropertyGroup Condition="'$(BastionComposite)' == 'true'">
+    <PublishReadyToRunComposite>true</PublishReadyToRunComposite>
+  </PropertyGroup>
+
+  <!-- tests\ holds UI test scripts and a separate minimal repro app; never compile it into Bastion. -->
+  <ItemGroup>
+    <Compile Remove="tests\**" />
+    <Page Remove="tests\**" />
+    <ApplicationDefinition Remove="tests\**" />
+    <None Remove="tests\**" />
+    <Content Remove="tests\**" />
+  </ItemGroup>
+
+  <!-- The native core, built by build-core.ps1. -->
+  <ItemGroup>
+    <Content Include="native\bastion_cabi.dll" Condition="Exists('native\bastion_cabi.dll')" Link="bastion_cabi.dll" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Bundled terminal font (SIL OFL 1.1, Fonts/OFL.txt; Fonts/README.md says where it comes from). -->
+    <Content Include="Fonts\*.ttf;Fonts\OFL.txt" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Window and tray icons, generated from docs/design/app-icon (Bastion, Bastion-dark) and assets/icon (tray-light.svg, tray-dark.svg). -->
+    <Content Include="Assets\*.ico" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Third-party licences and notices for the native DLLs and the font (Codex L04; scripts/notices.py). -->
+    <Content Include="..\..\licenses\native-win\THIRD_PARTY_NOTICES.txt" Link="THIRD_PARTY_NOTICES.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="update-apply.cmd" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="native\bastion_rdp.dll" Condition="Exists('native\bastion_rdp.dll')" Link="bastion_rdp.dll" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Microsoft's current ConPTY beside the app (build-core.ps1 fetches it, pinned and signature-checked): the core's
+         portable-pty loads conpty.dll from the app folder before the system one, and Windows 10's built-in ConPTY drops
+         mouse reports on their way to programs in local and WSL tabs. MIT (docs/third-party/ConPTY-LICENSE.txt). -->
+    <Content Include="native\conpty\conpty.dll" Condition="Exists('native\conpty\conpty.dll')" Link="conpty.dll" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="native\conpty\OpenConsole.exe" Condition="Exists('native\conpty\OpenConsole.exe')" Link="OpenConsole.exe" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\docs\third-party\ConPTY-LICENSE.txt" Condition="Exists('native\conpty\conpty.dll')" Link="ConPTY-LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <!-- XAML creates controls and reaches WinRT types the trimmer cannot see, so the WinUI and Windows App SDK
+       projections are kept whole; the big Windows SDK projection and the .NET framework are still trimmed. -->
+  <ItemGroup Condition="'$(BastionAot)' != 'true' Or '$(BastionAotRootProjections)' == 'true'">
+    <TrimmerRootAssembly Include="Microsoft.WinUI" />
+    <TrimmerRootAssembly Include="Microsoft.InteractiveExperiences.Projection" />
+    <TrimmerRootAssembly Include="Microsoft.Windows.ApplicationModel.Resources.Projection" />
+    <TrimmerRootAssembly Include="Microsoft.Windows.System.Power.Projection" />
+    <TrimmerRootAssembly Include="Microsoft.Web.WebView2.Core.Projection" />
+    <TrimmerRootAssembly Include="WinRT.Runtime" />
+  </ItemGroup>
+  <!-- The Windows App SDK 1.8 metapackage carries its on-device AI runtime (onnxruntime, DirectML, ~38 MB). Bastion
+       calls no Windows AI API, so those files are not shipped. -->
+  <Target Name="DropUnusedAiRuntimeFromBuild" AfterTargets="ResolvePackageAssets;ResolveAssemblyReferences">
+    <ItemGroup>
+      <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" Condition="'%(Filename)%(Extension)' == 'onnxruntime.dll' Or '%(Filename)%(Extension)' == 'DirectML.dll'" />
+      <RuntimePackAsset Remove="@(RuntimePackAsset)" Condition="'%(Filename)%(Extension)' == 'onnxruntime.dll' Or '%(Filename)%(Extension)' == 'DirectML.dll'" />
+    </ItemGroup>
+  </Target>
+  <Target Name="DropUnusedAiRuntimeFromPublish" AfterTargets="ComputeResolvedFilesToPublishList">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Filename)%(Extension)' == 'onnxruntime.dll' Or '%(Filename)%(Extension)' == 'DirectML.dll'" />
+    </ItemGroup>
+  </Target>
+  <!-- Both native DLLs are required (Codex L03): a Release build or publish fails without them, so
+       a release archive can never ship without the core or the RDP backend. Debug builds warn. -->
+  <Target Name="CheckNativeDlls" BeforeTargets="Build">
+    <Error Condition="'$(Configuration)' == 'Release' And !Exists('native\bastion_cabi.dll')" Text="native\bastion_cabi.dll is missing: run apps\windows\build-core.ps1 before a Release build." />
+    <Error Condition="'$(Configuration)' == 'Release' And !Exists('native\bastion_rdp.dll')" Text="native\bastion_rdp.dll is missing: run apps\windows\build-core.ps1 before a Release build." />
+    <Warning Condition="'$(Configuration)' != 'Release' And !Exists('native\bastion_cabi.dll')" Text="native\bastion_cabi.dll is missing: run apps\windows\build-core.ps1 first, or the app will fail to start." />
+    <Warning Condition="'$(Configuration)' != 'Release' And !Exists('native\bastion_rdp.dll')" Text="native\bastion_rdp.dll is missing: run apps\windows\build-core.ps1 first, or RDP will not work." />
+  </Target>
+</Project>

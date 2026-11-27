@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- A1-CORE-01-FU5: console checks of "Did you make this library?" against the core
+       (C ABI 100). No window, no network. Run: doc-origin-console-test.ps1. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Bastion.Tests</RootNamespace>
+    <AssemblyName>doc-origin-console</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs;..\activity-console\LeakProbeStub.cs;..\a1-logins-console\Stubs.cs" />
+    <!-- The app's own interop sources, compiled as they are: the test exercises the code the app ships. -->
+    <Compile Include="..\..\Interop\*.cs" Exclude="..\..\Interop\HelloInterop.cs" LinkBase="Interop" />
+    <Compile Include="..\..\AppRename.cs" Link="AppRename.cs" />
+    <Compile Include="..\..\ExternalProviders.cs" Link="ExternalProviders.cs" />
+    <!-- Two small app files the interop sources name (test hooks are off in this build). -->
+    <Compile Include="..\..\TestHooks.cs;..\..\SecretClipboardLifetime.cs;..\..\ItemExtrasEdits.cs;..\..\LoginReuseTimes.cs;..\..\DesktopFit.cs" />
+  </ItemGroup>
+</Project>

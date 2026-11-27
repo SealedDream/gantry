@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Unit tests for the connection tag rules and the tag:name filter (Native Windows). A plain console
+    program: no window, no NuGet packages. It compiles the app's own TagQuery.cs.
+    Run in this folder: dotnet run -c Release (exit code = number of failures).
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Bastion.Shell.Tests</RootNamespace>
+    <AssemblyName>TagQueryUnit</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\TagQuery.cs" Link="TagQuery.cs" />
+  </ItemGroup>
+</Project>

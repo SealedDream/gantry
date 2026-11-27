@@ -1,0 +1,41 @@
+[package]
+name = "bastion-plugin-host"
+description = "The plugin helper process: runs one plugin component in Wasmtime, talks to the core over two pipes."
+version = "1.0.0"
+edition = "2021"
+publish = false
+license = "MIT OR Apache-2.0"
+
+# The library is the pipe protocol only (`proto`), with no dependencies: the core links it.
+# The `helper` feature builds the program file `bastion-plugin-host`, the only thing that links
+# Wasmtime (PLUG-01 decision 1).
+[lib]
+name = "bastion_plugin_host"
+path = "src/lib.rs"
+
+[[bin]]
+name = "bastion-plugin-host"
+path = "src/main.rs"
+required-features = ["helper"]
+
+[features]
+default = ["helper"]
+helper = ["dep:wasmtime", "dep:getrandom", "dep:libc", "dep:windows-sys"]
+
+[dependencies]
+# Wasmtime 48 is the LTS line (security fixes until 2028-08-20), the same pin as PLUG-01 and the
+# test host. No component-model async: API 1 is the synchronous event-loop world.
+wasmtime = { version = "=48.0.9", default-features = false, features = ["runtime", "cranelift", "component-model", "std", "pulley"], optional = true }
+getrandom = { version = "0.3", optional = true }
+
+[target.'cfg(unix)'.dependencies]
+libc = { version = "0.2", optional = true }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_Security", "Win32_System_Threading"], optional = true }
+
+[profile.release]
+strip = true
+panic = "abort"
+codegen-units = 1
+lto = "thin"

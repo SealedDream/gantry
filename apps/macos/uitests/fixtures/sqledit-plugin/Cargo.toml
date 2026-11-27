@@ -1,0 +1,23 @@
+# Test fixture for the Native Mac SQL editor suite (uitests/plug06c-sql-editor.txt). Not shipped.
+# Build: cargo build --release --target wasm32-wasip2, then pack with ../pack-plugin.py.
+[package]
+name = "bastion-fixture-sqledit"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+bastion-plugin-sdk = { path = "../../../../../plugins/sdk" }
+
+[profile.release]
+opt-level = "s"
+strip = true
+panic = "abort"
+codegen-units = 1
+lto = true
+
+[workspace]

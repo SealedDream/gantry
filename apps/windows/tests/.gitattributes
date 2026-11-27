@@ -1,0 +1,2 @@
+# Shell scripts run inside WSL: keep LF even when Git on Windows converts line endings.
+*.sh text eol=lf

@@ -1,0 +1,134 @@
+# What goes into the public repository (scripts/public-export.sh reads this file).
+#
+# One rule per line: "+ <pattern>" includes, "- <pattern>" excludes. The LAST rule that matches a
+# path wins; a path no rule matches is left out. Patterns match the whole repo-relative path:
+# "*" stays inside one folder, "dir/**" is everything under dir. Changing this file changes what
+# the world sees: every edit needs review, and the leak scan (scripts/public-leak-scan.sh) must pass.
+
+# --- Top level -------------------------------------------------------------------------------
++ README.md
++ LICENSE
++ SECURITY.md
++ THREAT_MODEL.md
++ ARCHITECTURE.md
++ CONTRIBUTING.md
++ deny.toml
++ .gitignore
++ .gitattributes
+
+# --- Code ------------------------------------------------------------------------------------
++ core/**
++ core-cabi/**
++ core-ffi/**
++ rdp-ffi/**
++ plugin-host/**
++ plugins/**
++ cli/**
++ apps/macos/**
++ apps/windows/**
++ assets/**
+
+# UI automation suites: they drive the private test lab and the shared-machine harness (lab hosts,
+# screen lease, build slots). The public repo keeps the unit and console test projects.
+- apps/macos/uitests/**
+# Signed plugin packs and import fixtures: core-ffi and core-cabi tests load them.
++ apps/macos/uitests/fixtures/**
+- apps/windows/tests/*.ps1
+- apps/windows/tests/*.sh
+- apps/windows/tests/*.txt
+- apps/windows/tests/*.py
+- apps/windows/tests/*.json
+- apps/windows/tests/*.wprp
+- apps/windows/tests/fixtures/owner-lab/**
+- apps/windows/seed-owner-lab.ps1
+- core/tests/netfault_live.rs
+
+# --- Licences --------------------------------------------------------------------------------
++ licenses/**
+- licenses/tauri/**
+
+# --- Docs for users and contributors ---------------------------------------------------------
++ docs/README.md
++ docs/TESTING.md
++ docs/SSH_ALGORITHMS.md
++ docs/BIOMETRIC_GATE.md
++ docs/DEPENDENCIES.md
++ docs/DESIGN_SYSTEM.md
++ docs/release/**
++ docs/media/**
++ docs/plugins/**
++ docs/design/**
+# Design notes and specs record internal reviews and decisions: private dev repo only.
+- docs/design/*.md
+- docs/design/*.html
+- docs/specs/**
+- docs/plugins/OPERATIONS.md
++ docs/third-party/**
++ docs/testservers/**
+
+# --- Scripts: build, package, sign, check ----------------------------------------------------
++ scripts/*.sh
++ scripts/*.py
++ scripts/*.txt
++ scripts/*.ps1
++ scripts/lib/**
++ scripts/tests/**
++ scripts/public-export.list
++ scripts/public-leak-allow.txt
+
+# Public-only files (CONTRIBUTING, docs index, public TESTING guide): scripts/public-export.sh
+# copies public/overlay/<path> over <path> after this list is applied. The folder itself stays out.
+- public/**
+
+
+# Lab, shared-machine and internal-workflow helpers (lab addresses, screen lock, build slots,
+# task board, parity tracking): private dev repo only.
+- scripts/lab-*
+- scripts/lib/lab-hosts.sh
+- scripts/netfault-run.sh
+- scripts/rdp-keymap-test.sh
+- scripts/build-slot.sh
+- scripts/mac-lock.sh
+- scripts/mac-lock-check.sh
+- scripts/lib/lock-lib.sh
+- scripts/lib/screen-state.sh
+- scripts/warm-worktree.sh
+- scripts/board-drift.py
+- scripts/parity-exports.py
+- scripts/health.sh
+- scripts/health-install.sh
+- scripts/health.conf.example
+- scripts/audit-npm.sh
+- scripts/audit-npm-ignore.txt
+- scripts/preflight.sh
+- scripts/tests/stall-guard-test.sh
+- scripts/tests/build-env-test.sh
+
+# --- Always out ------------------------------------------------------------------------------
+# Paused Tauri app and its docs; internal process, audit and status records; agent settings.
+- ui-tauri/**
+- **/*tauri*
+- **/*tauri*/**
+- **/*TAURI*
+- **/*TAURI*/**
+- CLAUDE.md
+- **/CLAUDE.md
+- AGENTS.md
+- **/AGENTS.md
+- AUDIT*.md
+- REQUIREMENTS.md
+- SECURITY_CONTROL_MATRIX.md
+- audit/**
+- .claude/**
+- .codex/**
+- spikes/**
+- tools/**
+- handovers/**
+- docs/tasks/**
+- docs/evidence/**
+- docs/reviews/**
+- docs/plans/**
+- docs/workflow/**
+- docs/owner-feedback/**
+- docs/screenshots/**
+- docs/benchmarks/**

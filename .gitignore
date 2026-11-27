@@ -1,0 +1,17 @@
+target/
+.DS_Store
+*.tmp
+build/
+
+# Agent settings: the project settings file is shared; everything else under .claude/ is per machine
+.claude/*
+!.claude/settings.json
+
+# Front-end build output (recreated by `npm run build` in ui-tauri)
+ui-tauri/dist/
+core/fuzz/target/
+core/fuzz/corpus/
+core/fuzz/artifacts/
+
+# Lab host addresses: local only (see scripts/lab-hosts.local.env.example)
+scripts/lab-hosts.local.env

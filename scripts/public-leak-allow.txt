@@ -1,0 +1,32 @@
+# Allowed hits for scripts/public-leak-scan.sh: category, TAB, path regex, [TAB, line regex].
+# Category "*" matches every category. Lab host names and addresses (the private-term categories)
+# can never be allowed: remove them instead. Put the reason in a comment above each line.
+
+# Test keys for the SSH key-import tests (same files as scripts/secret-scan-allow.txt).
+secret:private key block	^core-cabi/tests/fixtures/import_(plain|encrypted)_ed25519$
+
+# Private-range addresses used as parse/format fixtures in tests (not lab machines: those are
+# private terms and always fail).
+private-ip	(^|/)(tests?|uitests|fixtures)/
+private-ip	(_tests?|Tests?)\.(rs|swift|cs)$
+private-ip	^core/src/(wol|sysview|properties|offline)\.rs$
+private-ip	^core-cabi/src/credtree\.rs$
+
+# Upstream authors' addresses in licence notices and vendored crates.
+email	^licenses/
+email	^rdp-ffi/vendor/
+# URL-parsing test: "user@github.com" is the input under test, not a contact.
+email	^core/tests/offline_forced_tests\.rs$	user@github\.com
+
+# The export tooling names what it keeps out.
+workflow	^scripts/public-(export\.list|leak-scan\.py|leak-allow\.txt)$
+vendor-name	^scripts/public-leak-scan\.py$
+# XAML comment, not shown to users.
+vendor-name	^apps/windows/MainWindow\.xaml$	<!--
+email	^scripts/public-leak-allow\.txt$
+
+# The export tests plant fake leaks on purpose.
+*	^scripts/tests/public-export-test\.sh$
+
+# Crate loops that skip ui-tauri when it is missing (the public tree).
+excluded-path	^scripts/(deny|audit-deps|check-locked|sbom|notices)\.(sh|py)$

@@ -1,0 +1,89 @@
+schema = 1
+id = "com.example.docker"
+name = "Docker fixture"
+version = "0.1.0"
+api = "1.5"
+publisher = "Example tests"
+description = "Docker over SSH: containers, images, volumes, networks, logs and a shell. Read-only unless the entry allows changes."
+license = "Apache-2.0"
+repository = "https://example.com/docker-fixture"
+
+# Every command the plugin can run. The core checks the arguments, builds the command and runs
+# it over the entry's SSH login and route; a change is confirmed by the user in the core's words.
+[permissions]
+exec = "entry"
+
+[[exec]]
+id = "version"
+argv = ["docker", "version", "--format", "{{json .Server.Version}}"]
+
+[[exec]]
+id = "ps"
+argv = ["docker", "ps", "--all", "--no-trunc", "--format", "{{json .}}"]
+
+[[exec]]
+id = "stats"
+argv = ["docker", "stats", "--no-stream", "--no-trunc", "--format", "{{json .}}"]
+
+[[exec]]
+id = "images"
+argv = ["docker", "image", "ls", "--no-trunc", "--format", "{{json .}}"]
+
+[[exec]]
+id = "volumes"
+argv = ["docker", "volume", "ls", "--format", "{{json .}}"]
+
+[[exec]]
+id = "networks"
+argv = ["docker", "network", "ls", "--no-trunc", "--format", "{{json .}}"]
+
+[[exec]]
+id = "logs"
+argv = ["docker", "logs", "--timestamps", "--tail", "{lines}", "{id}"]
+args = { lines = "count", id = "name" }
+
+[[exec]]
+id = "start"
+argv = ["docker", "start", "{id}"]
+args = { id = "name" }
+changes = true
+
+[[exec]]
+id = "stop"
+argv = ["docker", "stop", "{id}"]
+args = { id = "name" }
+changes = true
+
+[[exec]]
+id = "restart"
+argv = ["docker", "restart", "{id}"]
+args = { id = "name" }
+changes = true
+
+[[exec]]
+id = "remove"
+argv = ["docker", "rm", "{id}"]
+args = { id = "name" }
+changes = true
+
+[[exec]]
+id = "shell"
+argv = ["docker", "exec", "-it", "{id}", "sh"]
+args = { id = "name" }
+changes = true
+interactive = true
+
+[[connection_types]]
+id = "host"
+name = "Docker host"
+default_port = 22
+
+[[connection_types.fields]]
+key = "allow-changes"
+label = "Allow changes (start, stop, …)"
+kind = "toggle"
+
+[[commands]]
+id = "refresh"
+title = "Refresh"
+on = "connection:host"

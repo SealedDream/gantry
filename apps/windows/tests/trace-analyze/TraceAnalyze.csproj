@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Speed root cause: reads a WPR trace (.etl) of Bastion on Windows and prints, as markdown, what the UI thread ran
+       (sampled stacks with the AOT PDB), what it waited on, the files it faulted in, and every UI-thread stall.
+       Run by speed-trace.ps1 on the speed VM. Windows only at run time (ETW); builds anywhere. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>trace-analyze</AssemblyName>
+    <RootNamespace>Bastion.Tests</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- The speed VM has no .NET runtime: publish self-contained (speed-trace.ps1 -Publish on a builder). -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.1.16" />
+  </ItemGroup>
+</Project>

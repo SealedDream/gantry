@@ -1,0 +1,72 @@
+schema = 1
+id = "dev.gantry.vmware"
+name = "VMware"
+version = "0.5.0"
+api = "1.6"
+publisher = "Gantry"
+description = "vCenter and standalone ESXi VMs: state, connect, power and snapshots. Read-only unless the entry allows changes."
+license = "Apache-2.0"
+repository = "https://github.com/SealedDream/gantry/tree/main/plugins/official/vmware"
+
+[permissions]
+http = "entry"
+open = ["ssh", "rdp", "vnc"]
+library = "propose"
+
+[http]
+paths = ["/api/vcenter/", "/sdk/"]
+methods = ["GET", "POST", "DELETE"]
+auth = { header = "Authorization", format = "basic" }
+
+# Standalone ESXi (design D, docs/design/VMW-ESXI.md): the core logs in over SOAP and keeps the
+# session cookie; the plugin never sees the password or the cookie.
+[http.session]
+login_path = "/sdk"
+login_body = '<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:vim25"><soapenv:Body><urn:Login><urn:_this type="SessionManager">ha-sessionmgr</urn:_this><urn:userName>{user}</urn:userName><urn:password>{secret}</urn:password></urn:Login></soapenv:Body></soapenv:Envelope>'
+logout_body = '<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:vim25"><soapenv:Body><urn:Logout><urn:_this type="SessionManager">ha-sessionmgr</urn:_this></urn:Logout></soapenv:Body></soapenv:Envelope>'
+content_type = "text/xml"
+cookie = "vmware_soap_session"
+
+[[connection_types]]
+id = "vcenter"
+name = "VMware vCenter"
+default_port = 443
+sidebar = "tree"
+login = "auth"
+
+[[connection_types.fields]]
+key = "allow-changes"
+label = "Allow changes (power, snapshots)"
+kind = "toggle"
+
+[[connection_types.fields]]
+key = "snapshot-before-connect"
+label = "Snapshot before connect"
+kind = "toggle"
+
+[[connection_types]]
+id = "esxi"
+name = "VMware ESXi"
+default_port = 443
+sidebar = "tree"
+login = "session"
+
+[[connection_types.fields]]
+key = "allow-changes"
+label = "Allow changes (power, snapshots)"
+kind = "toggle"
+
+[[connection_types.fields]]
+key = "snapshot-before-connect"
+label = "Snapshot before connect"
+kind = "toggle"
+
+[[commands]]
+id = "refresh"
+title = "Refresh"
+on = "connection:vcenter"
+
+[[commands]]
+id = "refresh-esxi"
+title = "Refresh"
+on = "connection:esxi"

@@ -1,0 +1,267 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- The title bar: library switcher, session tabs, + and New, and the Bastion menu (WIN-COLD-LIGHT). It was part of
+     MainWindow.xaml but is collapsed until the content moves into the title bar after the first frame, so the window now
+     builds it then (MainWindow.LightStart.cs) and the first frame parses none of it, its menus included. Click and the
+     other events are wired in MainWindow.LightStart.cs (WireTitleBar), to the same handlers as before. -->
+<Grid
+    x:Class="Bastion.Shell.TitleBarView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Bastion.Shell"
+    MinHeight="{StaticResource TitleBarHeight}" Padding="{StaticResource ToolbarPadding}" ColumnSpacing="{StaticResource Space4}">
+    <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+    </Grid.ColumnDefinitions>
+    <!-- Title bar, as on Native Mac (MainWindow.HeaderStyle.cs): the library switcher spans the sidebar's width and its
+         right edge is the sidebar's divider line; with the sidebar hidden it is an icon button. -->
+    <!-- The sidebar hidden (owner 2026-11-15, as on the Mac): only this button sits at the far left; it brings the sidebar back. -->
+    <Button x:Name="ShowSidebarButton" x:FieldModifier="internal" Visibility="Collapsed" Style="{StaticResource SubtleButtonStyle}" VerticalAlignment="Center"
+            ToolTipService.ToolTip="Show sidebar (Ctrl+Alt+N)" AutomationProperties.Name="Show sidebar">
+        <FontIcon Glyph="{StaticResource GlyphSidebar}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource IconSize}" />
+    </Button>
+    <Grid x:Name="CompactLibraryHost" x:FieldModifier="internal" HorizontalAlignment="Left" VerticalAlignment="Stretch">
+        <DropDownButton x:Name="CompactLibraryButton" x:FieldModifier="internal" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalAlignment="Center"
+                        Style="{StaticResource SubtleButtonStyle}" Margin="{StaticResource CompactLibraryMargin}"
+                        AutomationProperties.AutomationId="CompactLibraryButton">
+            <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space8}">
+                <TextBlock x:Name="CompactLibraryText" x:FieldModifier="internal" Text="Personal" Style="{StaticResource BodyStrongTextStyle}" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+            <DropDownButton.Flyout>
+                <MenuFlyout x:Name="CompactLibraryFlyout" x:FieldModifier="internal" Placement="BottomEdgeAlignedLeft" />
+            </DropDownButton.Flyout>
+        </DropDownButton>
+        <Rectangle x:Name="CompactLibraryDivider" x:FieldModifier="internal" Width="1" HorizontalAlignment="Right" VerticalAlignment="Stretch"
+                   Fill="{ThemeResource DividerBrush}" IsHitTestVisible="False" />
+    </Grid>
+    <!-- Session tabs in the title bar, between the library actions and the quick actions, as in Windows Terminal. Tabs share the
+         width evenly down to TabMinWidth; past that the strip scrolls and the ‹ › buttons appear. -->
+    <Grid x:Name="TabBar" x:FieldModifier="internal" Grid.Column="4" VerticalAlignment="Center" Padding="{StaticResource TabStripPadding}" ColumnSpacing="{StaticResource Space4}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <!-- TABBAR-WIN (Mac #1277): Home at the start of the strip shows the start page (recent sessions) with tabs open. -->
+        <Button x:Name="HomeButton" x:FieldModifier="internal" Style="{StaticResource SubtleButtonStyle}"
+                ToolTipService.ToolTip="Home: recent sessions (Ctrl+Shift+H)" AutomationProperties.Name="Home" AutomationProperties.AutomationId="HomeButton"
+                AutomationProperties.AcceleratorKey="Control+Shift+H">
+            <FontIcon Glyph="{StaticResource GlyphHome}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource IconSize}" />
+        </Button>
+        <!-- As on the Mac: the open-tab count lists the tabs (All tabs panel); then the tabs and +. Ctrl+Shift+\ is the tile overview. -->
+        <Button x:Name="TabOverviewButton" x:FieldModifier="internal" Grid.Column="1" Style="{StaticResource SubtleButtonStyle}"
+                ToolTipService.ToolTip="All tabs (Ctrl+Shift+A)" AutomationProperties.Name="All tabs" AutomationProperties.AutomationId="TabOverviewButton">
+            <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space4}">
+                <FontIcon Glyph="{StaticResource GlyphTabOverview}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource IconSize}" />
+                <TextBlock x:Name="TabCountText" x:FieldModifier="internal" Text="0" VerticalAlignment="Center" Foreground="{ThemeResource TextSecondaryBrush}"
+                           AutomationProperties.AccessibilityView="Raw" />
+            </StackPanel>
+            <Button.Flyout>
+                <Flyout x:Name="AllTabsFlyout" x:FieldModifier="internal" Placement="BottomEdgeAlignedLeft" />
+            </Button.Flyout>
+        </Button>
+        <Button x:Name="TabScrollLeftButton" x:FieldModifier="internal" Grid.Column="2" Style="{StaticResource SubtleButtonStyle}" Visibility="Collapsed"
+                ToolTipService.ToolTip="Scroll tabs left" AutomationProperties.Name="Scroll tabs left">
+            <FontIcon Glyph="{StaticResource GlyphChevronLeft}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource SmallIconSize}" />
+        </Button>
+        <!-- The tab area is as wide as its tabs (capped in code, UpdateTabAreaMax), so + follows the last tab; the last column is
+             empty caption. TabArea has no background: the space past the last tab is caption (drag, double-click maximises).
+             The scroller only spans the tabs; over a ScrollViewer the title bar takes no drag. -->
+        <Grid x:Name="TabArea" x:FieldModifier="internal" Grid.Column="3">
+        <ScrollViewer x:Name="TabScroller" x:FieldModifier="internal" HorizontalAlignment="Left"
+                      HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Hidden"
+                      VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled">
+            <StackPanel x:Name="TabStrip" x:FieldModifier="internal" Orientation="Horizontal" Spacing="{StaticResource Space4}" AutomationProperties.Name="Open sessions" />
+        </ScrollViewer>
+        </Grid>
+        <Button x:Name="TabScrollRightButton" x:FieldModifier="internal" Grid.Column="4" Style="{StaticResource SubtleButtonStyle}" Visibility="Collapsed"
+                ToolTipService.ToolTip="Scroll tabs right" AutomationProperties.Name="Scroll tabs right">
+            <FontIcon Glyph="{StaticResource GlyphChevronRight}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource SmallIconSize}" />
+        </Button>
+        <Button x:Name="NewTerminalButton" x:FieldModifier="internal" Grid.Column="5" Style="{StaticResource SubtleButtonStyle}"
+                ToolTipService.ToolTip="New terminal: local shell (Ctrl+Shift+T)"
+                AutomationProperties.Name="New terminal" AutomationProperties.AcceleratorKey="Control+Shift+T">
+            <FontIcon Glyph="{StaticResource GlyphAdd}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource IconSize}" />
+        </Button>
+        <Button x:Name="TerminalProfilesButton" x:FieldModifier="internal" Grid.Column="6" Style="{StaticResource SubtleButtonStyle}"
+                ToolTipService.ToolTip="New connection, new folder or a terminal: local shell, PowerShell or WSL" AutomationProperties.Name="New">
+            <FontIcon Glyph="{StaticResource GlyphChevronDown}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource SmallIconSize}" />
+            <Button.Flyout>
+                <MenuFlyout x:Name="ProfilesMenu" x:FieldModifier="internal" Placement="BottomEdgeAlignedLeft">
+                    <MenuFlyoutItem x:Name="CompactNewConnectionItem" x:FieldModifier="internal" Text="New connection…" KeyboardAcceleratorTextOverride="Ctrl+N" AutomationProperties.Name="New connection" />
+                    <MenuFlyoutItem x:Name="CompactNewFromTemplateItem" x:FieldModifier="internal" Text="New from template…" AutomationProperties.Name="New from template" ToolTipService.ToolTip="New connection from a saved template" />
+                    <MenuFlyoutItem x:Name="CompactNewFolderItem" x:FieldModifier="internal" Text="New folder" KeyboardAcceleratorTextOverride="Ctrl+Shift+N" AutomationProperties.Name="New folder" />
+                    <MenuFlyoutSeparator x:Name="CompactNewSeparator" x:FieldModifier="internal" />
+                    <MenuFlyoutItem x:Name="ProfilesLocalShellItem" x:FieldModifier="internal" Text="Local shell" KeyboardAcceleratorTextOverride="Ctrl+Shift+T" AutomationProperties.Name="Local shell" />
+                    <MenuFlyoutItem x:Name="ProfilesPowerShellItem" x:FieldModifier="internal" Text="PowerShell" AutomationProperties.Name="PowerShell" />
+                    <MenuFlyoutSeparator x:Name="WslSeparator" x:FieldModifier="internal" />
+                    <MenuFlyoutItem x:Name="WslPlaceholder" x:FieldModifier="internal" Text="WSL" AutomationProperties.Name="WSL" />
+                    <MenuFlyoutSeparator />
+                    <MenuFlyoutItem x:Name="ProfilesAddAllWslItem" x:FieldModifier="internal" Text="Add all WSL distributions to the library" AutomationProperties.Name="Add all WSL distributions" />
+                </MenuFlyout>
+            </Button.Flyout>
+        </Button>
+    </Grid>
+    <!-- The Bastion app menu (owner point 12): Windows has no menu bar, so Settings, Check for Updates and the managers
+         live here, as in Edge's "Settings and more". No separate settings gear, no overflow. -->
+    <Button x:Name="MoreButton" x:FieldModifier="internal" Grid.Column="10" Style="{StaticResource SubtleButtonStyle}"
+            ToolTipService.ToolTip="Gantry menu: settings, updates and tools" AutomationProperties.Name="Gantry menu">
+        <FontIcon x:Name="MoreButtonIcon" x:FieldModifier="internal" Glyph="{StaticResource GlyphMore}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource IconSize}" />
+        <Button.Flyout>
+            <MenuFlyout x:Name="MoreMenu" x:FieldModifier="internal" Placement="BottomEdgeAlignedRight">
+                <MenuFlyoutItem x:Name="MoreSettings" x:FieldModifier="internal" Text="Settings…" AutomationProperties.Name="Settings">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="{StaticResource GlyphSettings}" FontFamily="{StaticResource SymbolFontFamily}" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Name="MoreCheckUpdates" x:FieldModifier="internal" Visibility="Collapsed" Text="Check for Updates…" AutomationProperties.Name="Check for Updates" />
+                <MenuFlyoutItem x:Name="MoreDiagnostics" x:FieldModifier="internal" Text="Export Diagnostics…" AutomationProperties.Name="Export Diagnostics"
+                                ToolTipService.ToolTip="A zip of the app log and settings, without secrets or names" />
+                <MenuFlyoutSeparator />
+                <!-- Sub-menus first: opened from low in this long menu they ran off a 768-px screen (Zoom, Type defaults,
+                     Terminal colours); near the top they open beside the menu with room below. -->
+                <MenuFlyoutSubItem x:Name="TerminalColorsMenu" x:FieldModifier="internal" Visibility="Collapsed" Text="Terminal colours" AutomationProperties.Name="Terminal colours" />
+                <MenuFlyoutSubItem x:Name="TypeDefaultsMenu" x:FieldModifier="internal" Text="Default Settings" AutomationProperties.Name="Default Settings" />
+                <MenuFlyoutSeparator />
+                <MenuFlyoutSubItem x:Name="ZoomMenu" x:FieldModifier="internal" Visibility="Collapsed" Text="Terminal text size" AutomationProperties.Name="Terminal text size">
+                    <!-- Ctrl++ is what people say; Ctrl+= (same key, no Shift) and Ctrl with the keypad + both zoom in. -->
+                    <MenuFlyoutItem x:Name="ZoomInItem" x:FieldModifier="internal" Text="Bigger text" KeyboardAcceleratorTextOverride="Ctrl++" AutomationProperties.Name="Bigger text" />
+                    <MenuFlyoutItem x:Name="ZoomOutItem" x:FieldModifier="internal" Text="Smaller text" KeyboardAcceleratorTextOverride="Ctrl+-" AutomationProperties.Name="Smaller text" />
+                    <MenuFlyoutItem x:Name="ZoomResetItem" x:FieldModifier="internal" Text="Actual text size" KeyboardAcceleratorTextOverride="Ctrl+0" AutomationProperties.Name="Actual text size" />
+                </MenuFlyoutSubItem>
+                <MenuFlyoutSeparator />
+                <!-- Shown only while the toolbar buttons are folded away on a very narrow window (UpdateToolbarLabels). -->
+                <MenuFlyoutItem x:Name="MoreQuickConnect" x:FieldModifier="internal" Text="Quick Connect…" Visibility="Collapsed" AutomationProperties.Name="Quick Connect" />
+                <MenuFlyoutItem x:Name="MorePalette" x:FieldModifier="internal" Text="Command palette" Visibility="Collapsed" AutomationProperties.Name="Command palette" />
+                <MenuFlyoutItem x:Name="MoreDelete" x:FieldModifier="internal" Text="Delete" KeyboardAcceleratorTextOverride="Del"
+                                AutomationProperties.Name="Delete selected item">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="{StaticResource GlyphDelete}" FontFamily="{StaticResource SymbolFontFamily}" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Name="MoreCredentials" x:FieldModifier="internal" Text="Credential Manager" AutomationProperties.Name="Credential Manager">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="{StaticResource GlyphKey}" FontFamily="{StaticResource SymbolFontFamily}" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Name="MoreAgent" x:FieldModifier="internal" Text="SSH Agent…" AutomationProperties.Name="SSH Agent">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="{StaticResource GlyphKey}" FontFamily="{StaticResource SymbolFontFamily}" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Name="MoreGateways" x:FieldModifier="internal" Text="Gateway Manager" AutomationProperties.Name="Gateway Manager">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="{StaticResource GlyphConnect}" FontFamily="{StaticResource SymbolFontFamily}" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <!-- Tools: the pages that left the sidebar's Application section (owner 2026-11-21); the Mac has them in View. -->
+                <MenuFlyoutSubItem x:Name="ToolsMenu" x:FieldModifier="internal" Text="Tools" AutomationProperties.Name="Tools">
+                    <MenuFlyoutItem x:Name="MoreActivity" x:FieldModifier="internal" Text="Activity" KeyboardAcceleratorTextOverride="Ctrl+Alt+A" AutomationProperties.Name="Activity">
+                        <MenuFlyoutItem.Icon>
+                            <FontIcon Glyph="&#xE81C;" FontFamily="{StaticResource SymbolFontFamily}" />
+                        </MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
+                    <MenuFlyoutItem x:Name="MoreAuditLog" x:FieldModifier="internal" Text="Audit log" KeyboardAcceleratorTextOverride="Ctrl+Alt+U" AutomationProperties.Name="Audit log">
+                        <MenuFlyoutItem.Icon>
+                            <FontIcon Glyph="&#xEA18;" FontFamily="{StaticResource SymbolFontFamily}" />
+                        </MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
+                    <MenuFlyoutItem x:Name="MorePlugins" x:FieldModifier="internal" Text="Plugins…" AutomationProperties.Name="Plugins">
+                        <MenuFlyoutItem.Icon>
+                            <FontIcon Glyph="&#xEA86;" FontFamily="{StaticResource SymbolFontFamily}" />
+                        </MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
+                    <MenuFlyoutItem x:Name="MoreTunnels" x:FieldModifier="internal" Text="Tunnels" AutomationProperties.Name="Tunnel Manager">
+                        <MenuFlyoutItem.Icon>
+                            <FontIcon Glyph="{StaticResource GlyphConnect}" FontFamily="{StaticResource SymbolFontFamily}" />
+                        </MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
+                    <MenuFlyoutItem x:Name="MoreWorkspaces" x:FieldModifier="internal" Text="Workspaces" AutomationProperties.Name="Manage Workspaces">
+                        <MenuFlyoutItem.Icon>
+                            <FontIcon Glyph="&#xE737;" FontFamily="{StaticResource SymbolFontFamily}" />
+                        </MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
+                </MenuFlyoutSubItem>
+                <MenuFlyoutItem x:Name="MoreDeleted" x:FieldModifier="internal" Text="Recently Deleted" AutomationProperties.Name="Recently Deleted">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="{StaticResource GlyphDelete}" FontFamily="{StaticResource SymbolFontFamily}" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <!-- Host status and Triggers next to the other managers, as in the Mac's View menu (AppMenus.swift): at the
+                     bottom of this long menu they were scrolled off a 768/800-px screen. -->
+                <MenuFlyoutItem x:Name="MoreHostStatus" x:FieldModifier="internal" Text="Host status…" AutomationProperties.Name="Host status" />
+                <MenuFlyoutItem x:Name="MoreTriggers" x:FieldModifier="internal" Text="Triggers…" AutomationProperties.Name="Triggers" />
+                <MenuFlyoutItem x:Name="MoreMultiExec" x:FieldModifier="internal" Text="Run on Several Hosts…" AutomationProperties.Name="Run on Several Hosts">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="{StaticResource GlyphKeyboard}" FontFamily="{StaticResource SymbolFontFamily}" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Name="MoreProviders" x:FieldModifier="internal" Text="Credential providers…" AutomationProperties.Name="Credential providers">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="{StaticResource GlyphLock}" FontFamily="{StaticResource SymbolFontFamily}" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Name="MoreVaultwarden" x:FieldModifier="internal" Text="Vaultwarden…" AutomationProperties.Name="Vaultwarden">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="{StaticResource GlyphLock}" FontFamily="{StaticResource SymbolFontFamily}" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Name="MorePasswordGenerator" x:FieldModifier="internal" Text="Password Generator…" AutomationProperties.Name="Password Generator" />
+                <MenuFlyoutSubItem x:Name="DocumentsMenu" x:FieldModifier="internal" Text="Documents" AutomationProperties.Name="Documents" />
+                <MenuFlyoutSeparator />
+                <MenuFlyoutItem x:Name="MoreImportFile" x:FieldModifier="internal" Text="Import Connections…" AutomationProperties.Name="Import Connections">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="{StaticResource GlyphImport}" FontFamily="{StaticResource SymbolFontFamily}" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Name="MoreImportKeePass" x:FieldModifier="internal" Text="Import KeePass File…" AutomationProperties.Name="Import KeePass File">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="{StaticResource GlyphImport}" FontFamily="{StaticResource SymbolFontFamily}" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Name="MoreImportSsh" x:FieldModifier="internal" Text="Import from OpenSSH…" AutomationProperties.Name="Import from OpenSSH">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="{StaticResource GlyphImport}" FontFamily="{StaticResource SymbolFontFamily}" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Name="MoreExportSsh" x:FieldModifier="internal" Text="Export to ssh_config…" AutomationProperties.Name="Export to ssh_config" />
+                <MenuFlyoutItem x:Name="MoreExportAnsible" x:FieldModifier="internal" Text="Export Ansible inventory…" AutomationProperties.Name="Export Ansible inventory" />
+                <MenuFlyoutItem x:Name="MoreAnsibleRun" x:FieldModifier="internal" Text="Run Ansible…" AutomationProperties.Name="Run Ansible" />
+                <MenuFlyoutItem x:Name="MoreExportLibrary" x:FieldModifier="internal" Visibility="Collapsed" Text="Export Library…" AutomationProperties.Name="Export Library" />
+                <MenuFlyoutSeparator />
+                <MenuFlyoutItem x:Name="MoreSendVariables" x:FieldModifier="internal" Text="Send Text with Variables…" AutomationProperties.Name="Send Text with Variables" />
+                <MenuFlyoutItem x:Name="MoreFiles" x:FieldModifier="internal" Text="Show files (SFTP)" AutomationProperties.Name="Files panel" />
+                <MenuFlyoutItem x:Name="MoreSplitRight" x:FieldModifier="internal" Text="Split right" KeyboardAcceleratorTextOverride="Alt+Shift+=" AutomationProperties.Name="Split pane right" />
+                <MenuFlyoutItem x:Name="MoreSplitDown" x:FieldModifier="internal" Text="Split down" KeyboardAcceleratorTextOverride="Alt+Shift+-" AutomationProperties.Name="Split pane down" />
+                <ToggleMenuFlyoutItem x:Name="NavToggle" x:FieldModifier="internal" Text="Navigation pane" KeyboardAcceleratorTextOverride="Ctrl+Alt+N" />
+                <ToggleMenuFlyoutItem x:Name="NavAutoHideToggle" x:FieldModifier="internal" Text="Auto-hide navigation in sessions"
+                                      AutomationProperties.HelpText="Collapse the navigation pane while a session tab has focus" />
+                <ToggleMenuFlyoutItem x:Name="InspectorToggle" x:FieldModifier="internal" Text="Details pane" KeyboardAcceleratorTextOverride="Ctrl+Alt+I" />
+            </MenuFlyout>
+        </Button.Flyout>
+    </Button>
+    <!-- The details pane toggle, last on the right as on the Mac (owner 2026-11-23): same icon, tooltip and behaviour. -->
+    <Button x:Name="InspectorToggleButton" x:FieldModifier="internal" Grid.Column="11" Style="{StaticResource SubtleButtonStyle}" VerticalAlignment="Center"
+            ToolTipService.ToolTip="Show or hide the details pane (Ctrl+Alt+I)" AutomationProperties.Name="Details pane" AutomationProperties.AutomationId="InspectorToggleButton"
+            AutomationProperties.AcceleratorKey="Control+Alt+I">
+        <FontIcon Glyph="{StaticResource GlyphSidebar}" FontFamily="{StaticResource SymbolFontFamily}" FontSize="{StaticResource IconSize}" RenderTransformOrigin="0.5,0.5">
+            <FontIcon.RenderTransform><ScaleTransform ScaleX="-1" /></FontIcon.RenderTransform>
+        </FontIcon>
+    </Button>
+</Grid>

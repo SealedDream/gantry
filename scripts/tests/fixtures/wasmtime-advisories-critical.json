@@ -1,0 +1,1 @@
+[{"ghsa_id":"GHSA-test-0000-0001","summary":"Test fixture: sandbox escape in Cranelift","severity":"critical","vulnerabilities":[{"package":{"ecosystem":"rust","name":"wasmtime"},"vulnerable_version_range":">= 40.0.0, < 48.0.99","first_patched_version":"48.0.99"}]}]

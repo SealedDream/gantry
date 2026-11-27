@@ -1,0 +1,4 @@
+{"kind":"PodMetricsList","apiVersion":"metrics.k8s.io/v1beta1","items":[
+ {"metadata":{"name":"web-7c9f8d6b5-x2kqp","namespace":"shop"},"timestamp":"2026-11-23T10:00:00Z","window":"15s","containers":[{"name":"web","usage":{"cpu":"2513421n","memory":"12340Ki"}}]},
+ {"metadata":{"name":"worker-5d8b7-bt9zr","namespace":"shop"},"containers":[{"name":"worker","usage":{"cpu":"250m","memory":"96Mi"}},{"name":"sidecar","usage":{"cpu":"1","memory":"1Gi"}}]}
+]}

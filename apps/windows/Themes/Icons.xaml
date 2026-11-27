@@ -1,0 +1,56 @@
+﻿<!--
+  Icon glyphs. FontIcons use Segoe Fluent Icons on Windows 11 and Segoe MDL2 Assets on Windows 10 (same code
+  points). Every glyph below was rendered and checked on Windows 10 (19045). The MDL2 folder glyphs (E8B7 Folder,
+  E8F4 NewFolder) draw page shapes on Windows 10, so folders are vector icons instead: AppIcon.cs
+  (Kind="Folder" / "FolderAdd"). No emoji anywhere. GlyphFavorite, GlyphSettings, GlyphKeyboard, GlyphConnect and GlyphWorkspace
+  (2026-11-03) were checked on Windows 11 only.
+-->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <FontFamily x:Key="SymbolFontFamily">Segoe Fluent Icons, Segoe MDL2 Assets, ms-appx:///Fonts/JetBrainsMonoNerdFontMono-Regular.ttf#JetBrainsMono Nerd Font Mono</FontFamily>
+    <x:String x:Key="GlyphAdd">&#xE710;</x:String>
+    <x:String x:Key="GlyphDelete">&#xE74D;</x:String>
+    <x:String x:Key="GlyphSearch">&#xE721;</x:String>
+    <x:String x:Key="GlyphMore">&#xE712;</x:String>
+    <x:String x:Key="GlyphAppMenu">&#xE700;</x:String>
+    <x:String x:Key="GlyphTerminal">&#xE756;</x:String>
+    <x:String x:Key="GlyphWeb">&#xE774;</x:String>
+    <x:String x:Key="GlyphDesktop">&#xE7F4;</x:String>
+    <!-- PLUG-08-WIN: database entry tabs (Segoe Fluent "Database"). -->
+    <x:String x:Key="GlyphDatabase">&#xEE94;</x:String>
+    <x:String x:Key="GlyphFolder">&#xE8B7;</x:String>
+    <x:String x:Key="GlyphDocument">&#xE8A5;</x:String>
+    <x:String x:Key="GlyphUp">&#xE74A;</x:String>
+    <x:String x:Key="GlyphRefresh">&#xE72C;</x:String>
+    <x:String x:Key="GlyphPin">&#xE718;</x:String>
+    <x:String x:Key="GlyphUnpin">&#xE77A;</x:String>
+    <x:String x:Key="GlyphDownload">&#xE896;</x:String>
+    <x:String x:Key="GlyphUpload">&#xE898;</x:String>
+    <x:String x:Key="GlyphChevronDown">&#xE70D;</x:String>
+    <x:String x:Key="GlyphChevronLeft">&#xE76B;</x:String>
+    <x:String x:Key="GlyphChevronRight">&#xE76C;</x:String>
+    <x:String x:Key="GlyphList">&#xEA37;</x:String>
+    <x:String x:Key="GlyphTabOverview">&#xE7C4;</x:String>
+    <x:String x:Key="GlyphHome">&#xE80F;</x:String>
+    <x:String x:Key="GlyphSidebar">&#xE8A0;</x:String>
+    <x:String x:Key="GlyphClose">&#xE711;</x:String>
+    <x:String x:Key="GlyphCopy">&#xE8C8;</x:String>
+    <x:String x:Key="GlyphPaneLeft">&#xE90C;</x:String>
+    <x:String x:Key="GlyphPaneRight">&#xE90D;</x:String>
+    <x:String x:Key="GlyphError">&#xE783;</x:String>
+    <x:String x:Key="GlyphKey">&#xE8D7;</x:String>
+    <x:String x:Key="GlyphLock">&#xE72E;</x:String>
+    <x:String x:Key="GlyphBack">&#xE72B;</x:String>
+    <x:String x:Key="GlyphForward">&#xE72A;</x:String>
+    <x:String x:Key="GlyphUnlock">&#xE785;</x:String>
+    <x:String x:Key="GlyphImport">&#xE8B5;</x:String>
+    <x:String x:Key="GlyphEdit">&#xE70F;</x:String>
+    <x:String x:Key="GlyphOpenFile">&#xE8E5;</x:String>
+    <x:String x:Key="GlyphInfo">&#xE946;</x:String>
+    <x:String x:Key="GlyphFavorite">&#xE735;</x:String>
+    <x:String x:Key="GlyphSettings">&#xE713;</x:String>
+    <x:String x:Key="GlyphKeyboard">&#xE765;</x:String>
+    <x:String x:Key="GlyphConnect">&#xE8A7;</x:String>
+    <x:String x:Key="GlyphWorkspace">&#xE8A9;</x:String>
+</ResourceDictionary>

@@ -1,0 +1,671 @@
+/// The Bastion plugin API, version 1.2 (spec `docs/specs/plugins.md`, section 5; 1.1 adds the
+/// `http` interface, `docs/specs/plugins-amendment-2.md`; 1.2 adds `open`,
+/// `docs/specs/plugins-amendment-3.md`; 1.3 changes no types and adds the library-sidebar tree and the
+/// `open` double-click item, `docs/plans/PLUG-API-13.md`; 1.4 changes only the manifest; 1.5 adds
+/// `exec`, declared commands over SSH, `docs/specs/plugins.md` section 19; 1.6 adds the `stat` tile
+/// and the `status` and `meter` cells, `docs/plans/PLUG-API-16.md`; and `library`, `docs/specs/plugins-amendment-5.md`). A 1.0, 1.1 or 1.2 plugin keeps working: its imports keep
+/// their names and the calls are unchanged.
+///
+/// Shape (settled by PLUG-01): a synchronous component with an event loop inside the plugin.
+/// - The plugin exports one function, `run`, which returns only when the core says `stop`.
+/// - One import waits: `events.next`. It returns the next thing that happened.
+/// - Every other import returns at once. An import that needs the core's answer returns a
+///   `request` number; the answer arrives later as a `reply` event with that number.
+/// - The SDK (`plugins/sdk`) hides the loop, so authors write ordinary `async` Rust.
+///
+/// Each permission of the manifest has its own interface (`net`, `credentials`, `storage`,
+/// `clipboard`, `files`). A component that imports one of them must hold that permission; the
+/// core reads the component's import list at install and the helper checks it again at load.
+/// `types`, `host`, `ui`, `events` and `log` need no permission. Of WASI only `wasi:clocks` and
+/// `wasi:random` work; any other `wasi:*` import is a stub that ends the plugin when called.
+///
+/// TLS inside protocol packets (left open by PLUG-01): not in API 1.0. `net.start-tls` covers
+/// protocols that switch to TLS on the stream (PostgreSQL, MySQL, LDAP, SMTP). A protocol that
+/// wraps TLS records in its own packets (SQL Server before TDS 8) needs a TLS session the plugin
+/// feeds bytes to; that comes as an addition in a minor version (`tls-session` in `net`) with the
+/// first plugin that needs it. The core keeps running every TLS session either way.
+package bastion:plugin@1.6.0;
+
+interface types {
+  /// Why a request failed. The text is the core's own words and is safe to show.
+  variant failure {
+    /// Not allowed: no permission, policy, a cap, or the secret check.
+    denied(string),
+    /// The request itself was wrong: a bad view, too large, an unknown stream.
+    invalid(string),
+    /// The network or the server failed.
+    io(string),
+    timed-out,
+    /// The user cancelled, or a dialog was dismissed.
+    cancelled,
+  }
+
+  /// Number of a request the core answers later with a `reply` event. Given by the import.
+  type request = u32;
+  /// Number of a question the core asks the plugin (rows, children, completions). The plugin
+  /// answers it once, with the matching `ui.provide-*` call or with `ui.refuse`.
+  type ask = u32;
+  type stream-id = u32;
+  type view-id = u32;
+  type node-id = u32;
+
+  /// The library entry this helper serves. A helper serves at most one entry.
+  record entry {
+    id: string,
+    name: string,
+    host: string,
+    port: u16,
+    /// The plugin's own connection-type fields, as `key`, `value`.
+    fields: list<tuple<string, string>>,
+  }
+
+  /// The answer to `http.send` (API 1.1). Redirects are not followed: a 3xx comes back as it
+  /// is, with its `Location` header.
+  /// A declared command's result (API 1.5). `exit` is none when the command ended without a
+  /// status (killed by a signal). Each stream is cut at 4 MiB; `truncated` says so.
+  record exec-output {
+    exit: option<s32>,
+    stdout: list<u8>,
+    stderr: list<u8>,
+    truncated: bool,
+  }
+
+  record http-response {
+    status: u16,
+    headers: list<tuple<string, string>>,
+    body: list<u8>,
+  }
+
+  /// The entry's own login. Passwords only; the core never releases SSH keys to a plugin.
+  record login {
+    user: string,
+    secret: string,
+  }
+}
+
+/// What the helper was started for. Returns at once.
+interface host {
+  use types.{entry};
+
+  /// The entry this helper serves; none for a helper with no entry (the settings page).
+  entry-info: func() -> option<entry>;
+  /// The plugin's settings, read-only, as the core saved them from the settings page.
+  settings: func() -> list<tuple<string, string>>;
+}
+
+/// Log lines. Rate-limited; a line that passes the secret check is dropped whole.
+interface log {
+  enum level { debug, info, warn, error }
+  line: func(level: level, text: string);
+}
+
+/// Views: a flat list of nodes with parent ids (WIT has no recursive types).
+///
+/// Rules the core checks before any renderer sees a list (a list that breaks one is refused
+/// with `invalid`; the helper is not killed):
+/// - at most 2,000 nodes and 256 KiB per view; nesting depth at most 32;
+/// - node ids unique; exactly one root (no parent); every parent exists; no cycles;
+/// - only `stack`, `split` (at most two children), `tabs` (children must be `tab`), `tab` and
+///   `toolbar` hold children;
+/// - labels and titles at most 32 characters;
+/// - all text is plain text: no markup, no links; control characters other than tab and new
+///   line are shown escaped;
+/// - at most 30 updates a second; updates past the rate are held back, not lost.
+interface ui {
+  use types.{failure, request, ask, view-id, node-id};
+
+  enum axis { vertical, horizontal }
+  enum banner-level { info, warning, error }
+
+  /// What a confirmation is about. The core draws the prompt in its own words, names the entry
+  /// and its environment, and audits the answer.
+  enum confirm-kind {
+    drop,
+    truncate,
+    delete-rows,
+    end-session,
+    run-statements,
+    other,
+  }
+
+  record button {
+    label: string,
+    /// A name from the app's icon set, or none.
+    icon: option<string>,
+    enabled: bool,
+  }
+
+  /// A text field. Never masked: plugins cannot draw password fields.
+  record text-field {
+    label: string,
+    value: string,
+    placeholder: string,
+    multi-line: bool,
+  }
+
+  record number-field {
+    label: string,
+    value: f64,
+    min: option<f64>,
+    max: option<f64>,
+  }
+
+  record choice-field {
+    label: string,
+    options: list<string>,
+    selected: option<u32>,
+  }
+
+  record toggle-field {
+    label: string,
+    value: bool,
+  }
+
+  /// A code editor. The core colours it (the plugin names the language, `sql` first) and keeps
+  /// its text across a helper restart.
+  record code-editor {
+    language: string,
+    text: string,
+    read-only: bool,
+  }
+
+  record column {
+    title: string,
+    sortable: bool,
+    editable: bool,
+  }
+
+  /// A paged table. The core asks for rows with a `rows` event as the user scrolls.
+  record table {
+    columns: list<column>,
+    /// Number of rows, when the plugin knows it.
+    total-rows: option<u64>,
+  }
+
+  /// A lazy tree. With columns it is a tree table (for example a query plan). The core asks for
+  /// children with a `children` event when a node is expanded.
+  record tree {
+    columns: list<column>,
+  }
+
+  record banner {
+    level: banner-level,
+    text: string,
+  }
+
+  record empty-state {
+    title: string,
+    text: string,
+  }
+
+  /// How the app colours a status cell (API 1.6). The app picks the colours; `off` also dims
+  /// the row (a stopped guest).
+  enum tone { neutral, good, warning, critical, off }
+
+  /// A summary tile (API 1.6): a title, a value, a detail line and, with `fraction`, a thin bar
+  /// from 0.0 to 1.0. The app colours the bar amber from 0.85 and red from 0.90.
+  record stat {
+    title: string,
+    value: string,
+    detail: string,
+    fraction: option<f32>,
+  }
+
+  /// A state mark and its text, for example a dot and "running" (API 1.6).
+  record status-cell {
+    tone: tone,
+    text: string,
+  }
+
+  /// A small bar from 0.0 to 1.0 and its text, for example memory use (API 1.6). The app
+  /// colours it like a `stat` bar.
+  record meter-cell {
+    fraction: f32,
+    text: string,
+  }
+
+  variant component {
+    // Layout
+    stack(axis),
+    split(axis),
+    tabs,
+    /// One tab of a `tabs`; the string is its title.
+    tab(string),
+    toolbar,
+    // Display
+    label(string),
+    banner(banner),
+    /// Progress from 0.0 to 1.0, or none for "busy".
+    progress(option<f32>),
+    empty-state(empty-state),
+    // Input
+    button(button),
+    text-field(text-field),
+    number-field(number-field),
+    choice(choice-field),
+    toggle(toggle-field),
+    // Code
+    code-editor(code-editor),
+    // Data
+    table(table),
+    tree(tree),
+    // API 1.6
+    stat(stat),
+  }
+
+  record node {
+    id: node-id,
+    parent: option<node-id>,
+    component: component,
+  }
+
+  variant cell {
+    null,
+    text(string),
+    number(f64),
+    boolean(bool),
+    // API 1.6
+    status(status-cell),
+    meter(meter-cell),
+  }
+
+  record row {
+    /// The plugin's key for the row; edits and selections name rows by it.
+    key: string,
+    cells: list<cell>,
+  }
+
+  record menu-item {
+    id: string,
+    title: string,
+  }
+
+  record tree-item {
+    key: string,
+    label: string,
+    icon: option<string>,
+    has-children: bool,
+    /// Values for the tree's columns after the first.
+    cells: list<cell>,
+    /// The node's context menu. An item with id `open` is also the double-click (and Return)
+    /// action (API 1.3).
+    menu: list<menu-item>,
+  }
+
+  record completion {
+    label: string,
+    insert: string,
+    detail: string,
+  }
+
+  record error-mark {
+    /// Zero-based line and column, in characters.
+    line: u32,
+    column: u32,
+    message: string,
+  }
+
+  /// Replace the whole view.
+  set-view: func(view: view-id, nodes: list<node>) -> result<_, failure>;
+  /// Add or replace some nodes and remove others (a removed node takes its children with it).
+  patch-view: func(view: view-id, upsert: list<node>, remove: list<node-id>) -> result<_, failure>;
+  /// Open a modal dialog over a view. Its nodes form their own list with the same rules; its
+  /// events carry the returned view id. The core adds the fixed chrome with the plugin's name.
+  open-dialog: func(over: view-id, title: string, nodes: list<node>) -> result<view-id, failure>;
+  close-dialog: func(dialog: view-id);
+  /// Marks in a code editor; an empty list clears them.
+  mark-errors: func(view: view-id, editor: node-id, marks: list<error-mark>) -> result<_, failure>;
+
+  /// Answers a `rows` ask: at most 1,000 rows. `total` updates the table's row count.
+  provide-rows: func(ask: ask, rows: list<row>, total: option<u64>) -> result<_, failure>;
+  /// Answers a `children` ask.
+  provide-children: func(ask: ask, items: list<tree-item>) -> result<_, failure>;
+  /// Answers a `completions` ask.
+  provide-completions: func(ask: ask, items: list<completion>) -> result<_, failure>;
+  /// Answers any ask with an error the core shows in its own frame.
+  refuse: func(ask: ask, message: string);
+
+  /// Asks the user to confirm a risky action. The reply is `confirmed(bool)`. Refused with
+  /// `denied` in the `sidebar` view (API 1.3). The text is shown
+  /// in a framed region headed by the core's words; it is cut at 64 KiB.
+  confirm: func(kind: confirm-kind, text: string) -> request;
+}
+
+/// The one import that waits.
+interface events {
+  use types.{failure, login, request, ask, stream-id, view-id, node-id, http-response, exec-output};
+  use ui.{cell};
+
+  record open-view {
+    view: view-id,
+    /// What to open: a connection type's view, a command's view, `settings`, or `sidebar`
+    /// (API 1.3: the entry's tree in the library sidebar; one root `tree` node, set with
+    /// `set-view`, no patches, dialogs or confirmations; only a menu choice is a user action).
+    name: string,
+  }
+
+  record command {
+    id: string,
+    /// The view the command was run from, if any.
+    view: option<view-id>,
+  }
+
+  /// What the user did on a node.
+  variant input {
+    /// A button.
+    pressed,
+    text(string),
+    number(f64),
+    choice(u32),
+    toggled(bool),
+    /// Run in a code editor: the selection, or all the text when nothing is selected.
+    run(string),
+    /// A tree node's menu item: (node key, item id).
+    menu(tuple<string, string>),
+    /// Selected rows or tree nodes, by key.
+    selected(list<string>),
+    /// The user sorted a table: (column, ascending).
+    sorted(tuple<u32, bool>),
+  }
+
+  record ui-event {
+    view: view-id,
+    node: node-id,
+    input: input,
+  }
+
+  record cell-edit {
+    row: string,
+    column: u32,
+    value: cell,
+  }
+
+  /// Edits in an editable table. The plugin turns them into statements and asks the core to
+  /// confirm those (`confirm` with `run-statements`) before it runs them.
+  record table-edits {
+    view: view-id,
+    node: node-id,
+    edits: list<cell-edit>,
+  }
+
+  record rows-ask {
+    ask: ask,
+    view: view-id,
+    node: node-id,
+    offset: u64,
+    /// At most 1,000.
+    count: u32,
+  }
+
+  record children-ask {
+    ask: ask,
+    view: view-id,
+    node: node-id,
+    /// The tree item to expand; none for the top level.
+    parent: option<string>,
+  }
+
+  record completions-ask {
+    ask: ask,
+    view: view-id,
+    node: node-id,
+    text: string,
+    /// Cursor position, in characters.
+    offset: u32,
+  }
+
+  variant reply-value {
+    /// Done, nothing to return.
+    none,
+    /// `net.connect`.
+    opened(stream-id),
+    /// `net.read`. An empty list means the server closed the stream.
+    data(list<u8>),
+    /// `credentials.entry-login`.
+    login(login),
+    /// `storage.get`.
+    value(option<list<u8>>),
+    /// `storage.keys`.
+    keys(list<string>),
+    /// `ui.confirm`.
+    confirmed(bool),
+    /// `files.open`: the chosen file's name (no path) and bytes.
+    file(tuple<string, list<u8>>),
+    /// `http.send` (API 1.1).
+    http(http-response),
+    /// `open.connection` (API 1.2): true when the user confirmed and the app opened it, false
+    /// when the user declined. Nothing about the connection itself.
+    connection(bool),
+    /// `exec.run` (API 1.5).
+    exec(exec-output),
+    /// `library.propose` (API 1.6): how many connections the user saved. The plugin learns
+    /// nothing else about the library.
+    created(u32),
+  }
+
+  record reply {
+    request: request,
+    outcome: result<reply-value, failure>,
+  }
+
+  variant event {
+    open-view(open-view),
+    close-view(view-id),
+    command(command),
+    ui(ui-event),
+    table-edits(table-edits),
+    rows(rows-ask),
+    children(children-ask),
+    completions(completions-ask),
+    /// The user pressed Cancel in a view. The plugin should stop the view's running work, for
+    /// example by sending the protocol's cancel request on a second stream.
+    cancel(view-id),
+    reply(reply),
+    /// The helper is stopping: return from `run`. The core kills the helper if `run` does not
+    /// return within 2 s. Abort bytes in force when the core sends `stop` are sent even if the
+    /// plugin closes those streams or clears them on its way out.
+    stop,
+  }
+
+  /// Waits for the next event. Time spent waiting does not count as compute time; the 2 s
+  /// compute limit starts again each time `next` returns.
+  next: func() -> event;
+}
+
+/// Permission `network = "entry"`: byte streams to the entry's host through the entry's route.
+/// The core runs TLS; the plugin never holds TLS keys.
+interface net {
+  use types.{request, stream-id};
+
+  /// A stream to the entry's host, on the entry's port or a port the manifest lists. Reply:
+  /// `opened`. Caps: 16 streams at once, 30 new connections a minute (attempts count).
+  connect: func(port: option<u16>) -> request;
+  /// Reply: `data`, at most `max` bytes (at most 1 MiB), at least one unless the stream ended.
+  read: func(%stream: stream-id, max: u32) -> request;
+  /// Reply: `none` once the core has taken the bytes. At most 1 MiB per call. With the TLS mode
+  /// verify-full or pinned and a destination that is not local, only a preamble of at most 512
+  /// bytes may go before `start-tls`.
+  write: func(%stream: stream-id, data: list<u8>) -> request;
+  /// Starts TLS on the stream, run by the core with the entry's TLS mode. Reply: `none`.
+  start-tls: func(%stream: stream-id) -> request;
+  close: func(%stream: stream-id);
+  /// Bytes the core sends once, on a new stream to the same host, port and route, when the
+  /// helper stops in an ordinary way (for example a protocol's cancel request). At most 512
+  /// bytes; one registration per stream, and a new one replaces the old one; cleared when the
+  /// stream closes. After the core sends `stop`, nothing changes: a registration is refused
+  /// with `denied`, and `clear-abort` and `close` leave the bytes in force. Reply: `none`.
+  register-abort: func(%stream: stream-id, data: list<u8>) -> request;
+  /// Clears the stream's abort bytes. Ignored after `stop`.
+  clear-abort: func(%stream: stream-id);
+}
+
+/// Permission `credentials = "entry"`.
+interface credentials {
+  use types.{request};
+
+  /// The entry's own login. Released once per helper, after the core's own checks and prompt,
+  /// with an audit record. Reply: `login`.
+  entry-login: func() -> request;
+}
+
+/// Permission `storage`: a key-value store for this entry only, not encrypted, 50 MiB per plugin.
+/// A write that passes the secret check is refused.
+interface storage {
+  use types.{request};
+
+  /// Reply: `value`.
+  get: func(key: string) -> request;
+  /// Reply: `none`.
+  set: func(key: string, value: list<u8>) -> request;
+  /// Reply: `none`.
+  delete: func(key: string) -> request;
+  /// Reply: `keys`, the keys that start with `prefix`.
+  keys: func(prefix: string) -> request;
+}
+
+/// Permission `clipboard = "write"`. Only right after a user action; no reading.
+interface clipboard {
+  use types.{request};
+
+  /// Reply: `none`.
+  write-text: func(text: string) -> request;
+}
+
+/// Permission `files`: one file the user picks in the app's own dialog. 100 MiB per file.
+interface files {
+  use types.{request};
+
+  /// Needs `files = ["save"]`. Reply: `none`, or `cancelled` if the user closed the dialog.
+  save: func(suggested-name: string, data: list<u8>) -> request;
+  /// Needs `files = ["open"]`. Reply: `file`, or `cancelled`.
+  open: func() -> request;
+}
+
+/// HTTP/1.1 requests to the entry's host (API 1.1; permission `http = "entry"`). The core
+/// opens the connection through the entry's route, runs TLS under the entry's TLS mode, writes
+/// the request and reads the answer. Checked on every request (the core's words come back as
+/// `denied` or `invalid`):
+/// - the method is in the manifest's `http.methods`; the port is the entry's or in `http.ports`;
+/// - `target` is origin form ("/path?query"), printable ASCII, no "#", "\", ";" in the path,
+///   no "." or ".." or empty segment, no percent-encoded "/", "\", ".", ";", "%" or control
+///   character, and starts with one of `http.paths` (byte-exact);
+/// - headers: at most 32 and 16 KiB; the core sets Host, Content-Length, Connection,
+///   User-Agent and the login header itself, and refuses Cookie, Proxy-*, Upgrade and other
+///   framing headers;
+/// - a body (at most 4 MiB) only with POST, PUT, PATCH or DELETE;
+/// - nothing in the target, the headers or the body may hold a password the core knows.
+/// With `with-login` the core adds the entry's login as the manifest's `http.auth` header; the
+/// plugin never sees it, and an answer that repeats it is withheld. Answers are at most 16 MiB.
+interface http {
+  use types.{request};
+
+  enum method { get, head, post, put, patch, delete, options }
+
+  record http-request {
+    method: method,
+    /// None means the entry's port.
+    port: option<u16>,
+    target: string,
+    headers: list<tuple<string, string>>,
+    body: list<u8>,
+    with-login: bool,
+    /// Whole-request time limit in milliseconds; none, or more than 60,000, means 60,000.
+    timeout-ms: option<u32>,
+  }
+
+  /// Answered by a `reply` event: `http(http-response)` or a failure.
+  send: func(req: http-request) -> request;
+  /// Ends an outstanding `send`; its reply is a failure.
+  cancel: func(req: request);
+}
+
+/// Ask the app to open a built-in connection (API 1.2; permission `open`). The core checks the
+/// request and the user confirms the exact protocol, host, port and route in a sheet the core
+/// words. Only within 10 s of a user action in the plugin's view, one at a time, 10 a minute.
+interface open {
+  use types.{request};
+
+  enum protocol { ssh, rdp, vnc }
+
+  record open-request {
+    protocol: protocol,
+    /// A DNS name or an IP literal (IPv6 without brackets). No scheme, port, user or path.
+    host: string,
+    /// None means the protocol's default port (22, 3389, 5900).
+    port: option<u16>,
+    /// Shown in the sheet as text from the plugin, and as the tab title; one line, at most 128
+    /// characters.
+    label: string,
+    /// Use the plugin entry's route (gateway or tunnel). The user can change it in the sheet.
+    via-entry-route: bool,
+  }
+
+  /// Answered by a `reply` event: `connection(bool)` or a failure.
+  connection: func(req: open-request) -> request;
+}
+
+/// Permission `exec = "entry"` (API 1.5): run a command the manifest declares in `[[exec]]` on
+/// the entry's host, over the entry's SSH login and route. The plugin names a template and gives
+/// its typed arguments; the core checks each against its kind, builds the argv and quotes it.
+/// The plugin never sends a command line and never sees the login. A template with
+/// `changes = true` needs the entry's "Allow changes" and a user action (or a confirmed
+/// `ui.confirm`) just before. At most 4 running, 120 a minute.
+interface exec {
+  use types.{request};
+
+  /// Answered by a `reply` event: `exec(exec-output)` or a failure (`timed-out` when the time
+  /// ran out; `invalid("cancelled")` after `cancel`). `timeout-ms` is capped at 120 s; 0 is 30 s.
+  run: func(template: string, args: list<tuple<string, string>>, timeout-ms: u32) -> request;
+  /// Stops a running command.
+  cancel: func(req: request);
+  /// Opens a terminal tab on the entry running an `interactive = true` template in a PTY.
+  /// Answered by `connection(bool)`: true when the tab opened.
+  terminal: func(template: string, args: list<tuple<string, string>>, label: string) -> request;
+}
+
+/// Propose connections for the user's library (API 1.6; permission `library = "propose"`). The
+/// core checks every proposal and the user picks the folder, the protocol, the host and an
+/// optional saved credential in a sheet the core words; the app saves normal connections. The
+/// plugin never reads the library and never handles a secret. Only within 10 s of a user action
+/// in the plugin's view, one sheet at a time, 10 a minute, at most 100 proposals per call.
+interface library {
+  use types.{request};
+
+  enum protocol { ssh, rdp, vnc }
+
+  record proposal {
+    /// The connection name the sheet suggests: one line, at most 128 characters.
+    label: string,
+    /// A DNS name or an IP literal (IPv6 without brackets), or none when the plugin does not
+    /// know it; the user types it in the sheet.
+    host: option<string>,
+    /// The protocol the sheet suggests; the user can change it.
+    protocol: protocol,
+    /// The guest's operating system family, when known: `windows`, `linux`, `bsd`, `macos` or
+    /// `other`. The sheet shows it next to the name.
+    os-hint: option<string>,
+  }
+
+  /// Answered by a `reply` event: `created(n)`, or the failure `cancelled` when the user closed
+  /// the sheet.
+  propose: func(proposals: list<proposal>) -> request;
+}
+
+world plugin {
+  import host;
+  import log;
+  import ui;
+  import events;
+  import net;
+  import credentials;
+  import storage;
+  import clipboard;
+  import files;
+  import http;
+  import open;
+  import exec;
+  import library;
+
+  /// Called once. Returns when the plugin receives `stop`.
+  export run: func();
+}

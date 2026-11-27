@@ -1,0 +1,12 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Software\SimonTatham\PuTTY\Sessions\web%20server]
+"HostName"="web.example.com"
+"PortNumber"=dword:00000016
+"Protocol"="ssh"
+"UserName"="deploy"
+
+[HKEY_CURRENT_USER\Software\SimonTatham\PuTTY\Sessions\switch]
+"HostName"="10.0.0.2"
+"PortNumber"=dword:00000017
+"Protocol"="telnet"

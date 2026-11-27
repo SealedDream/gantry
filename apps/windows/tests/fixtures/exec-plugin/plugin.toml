@@ -1,0 +1,37 @@
+schema = 1
+id = "com.example.execfixture"
+name = "Exec fixture"
+version = "0.1.0"
+api = "1.5"
+publisher = "Example tests"
+description = "Test fixture: runs, cancels and opens declared commands over SSH."
+license = "MIT"
+repository = "https://example.com/exec-fixture"
+
+[permissions]
+exec = "entry"
+
+[[exec]]
+id = "hello"
+argv = ["echo", "exec-ok"]
+
+[[exec]]
+id = "wait"
+argv = ["sleep", "{secs}"]
+args = { secs = "count" }
+
+[[exec]]
+id = "term"
+argv = ["top"]
+changes = true
+interactive = true
+
+[[connection_types]]
+id = "host"
+name = "Exec fixture host"
+default_port = 2222
+
+[[connection_types.fields]]
+key = "allow-changes"
+label = "Allow changes"
+kind = "toggle"

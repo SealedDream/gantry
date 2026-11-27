@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- A1-NW-01: console checks of the login rule the Windows app shares between its sign-in paths, and of the
+       core's answers through bastion_cabi.dll. No window, no desktop, no network. Run: see a1-logins-console-test.ps1. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Bastion.Tests</RootNamespace>
+    <AssemblyName>a1-logins-console</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs;Stubs.cs" />
+    <!-- Pure files the interop sources name (no WinUI): compiled as they are rather than stubbed. -->
+    <Compile Include="..\..\TestHooks.cs;..\..\SecretClipboardLifetime.cs;..\..\ItemExtrasEdits.cs;..\..\DesktopFit.cs;..\..\LoginReuseTimes.cs" LinkBase="Shell" />
+    <!-- The app's own interop sources, compiled as they are: the test exercises the code the app ships. -->
+    <Compile Include="..\..\Interop\*.cs" Exclude="..\..\Interop\HelloInterop.cs" LinkBase="Interop" />
+    <Compile Include="..\..\AppRename.cs" Link="AppRename.cs" />
+    <Compile Include="..\..\ExternalProviders.cs" Link="ExternalProviders.cs" />
+    <!-- Interop\TerminalNative.cs uses LeakProbe since #1233. -->
+    <Compile Include="..\activity-console\LeakProbeStub.cs" />
+    <Compile Include="..\..\ItemExtrasEdits.cs" Link="ItemExtrasEdits.cs" />
+  </ItemGroup>
+</Project>

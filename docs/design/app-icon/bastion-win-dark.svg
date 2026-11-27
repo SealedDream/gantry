@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Bastion (dark taskbar)</title>
+  <!-- Windows 11 app icon: glyph only, no plate. 32–256 px. -->
+  <rect x="50" y="31" width="156" height="45" rx="6" fill="#8B5CF6"/>
+  <rect x="31" y="54" width="194" height="46" rx="6" fill="#3B82F6"/>
+  <rect x="12" y="76" width="232" height="164" rx="7" fill="#FFFFFF"/>
+  <path d="M54 129 L96 158 L54 187" fill="none" stroke="#1E1B4B" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="118" y="176" width="68" height="18" rx="9" fill="#1E1B4B"/>
+</svg>

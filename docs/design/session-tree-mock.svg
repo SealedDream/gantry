@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="13">
+  <g>
+    <rect x="0" y="0" width="320" height="300" fill="#f4f4f6"/>
+    <text x="14" y="22" fill="#6b6b73" font-size="11" font-weight="600">LIBRARY · light</text>
+    <text x="14" y="50" fill="#6b6b73">▾</text><text x="30" y="50" fill="#1d1d1f">Production</text>
+    <text x="30" y="76" fill="#6b6b73">▾</text><text x="46" y="76" fill="#1d1d1f" font-weight="600">build-01</text>
+    <rect x="40" y="86" width="270" height="24" rx="5" fill="#d6e4ff"/>
+    <circle cx="70" cy="98" r="4" fill="#2fa84f"/><text x="82" y="102" fill="#1d1d1f">Terminal</text>
+    <circle cx="70" cy="124" r="4" fill="#2fa84f"/><text x="82" y="128" fill="#1d1d1f">Terminal 2</text>
+    <circle cx="70" cy="150" r="4" fill="#b87800"/><text x="82" y="154" fill="#1d1d1f">Files — connecting…</text>
+    <text x="30" y="180" fill="#6b6b73">▸</text><text x="46" y="180" fill="#1d1d1f" font-weight="600">db-02</text><text x="92" y="180" fill="#6b6b73">(2)</text>
+    <text x="46" y="206" fill="#1d1d1f">web-03</text>
+    <text x="14" y="236" fill="#6b6b73" font-size="11" font-weight="600">OTHER SESSIONS</text>
+    <circle cx="38" cy="256" r="4" fill="#2fa84f"/><text x="50" y="260" fill="#1d1d1f">Local Shell</text>
+    <circle cx="38" cy="282" r="4" fill="#c8372d"/><text x="50" y="286" fill="#1d1d1f">ops@10.0.0.9 — ended</text>
+  </g>
+  <g transform="translate(320,0)">
+    <rect x="0" y="0" width="320" height="300" fill="#1e1e20"/>
+    <text x="14" y="22" fill="#9a9aa2" font-size="11" font-weight="600">LIBRARY · dark</text>
+    <text x="14" y="50" fill="#9a9aa2">▾</text><text x="30" y="50" fill="#ececf0">Production</text>
+    <text x="30" y="76" fill="#9a9aa2">▾</text><text x="46" y="76" fill="#ececf0" font-weight="600">build-01</text>
+    <rect x="40" y="86" width="270" height="24" rx="5" fill="#2d4a7a"/>
+    <circle cx="70" cy="98" r="4" fill="#3ccf63"/><text x="82" y="102" fill="#ececf0">Terminal</text>
+    <circle cx="70" cy="124" r="4" fill="#3ccf63"/><text x="82" y="128" fill="#ececf0">Terminal 2</text>
+    <circle cx="70" cy="150" r="4" fill="#f0a91c"/><text x="82" y="154" fill="#ececf0">Files — connecting…</text>
+    <text x="30" y="180" fill="#9a9aa2">▸</text><text x="46" y="180" fill="#ececf0" font-weight="600">db-02</text><text x="92" y="180" fill="#9a9aa2">(2)</text>
+    <text x="46" y="206" fill="#ececf0">web-03</text>
+    <text x="14" y="236" fill="#9a9aa2" font-size="11" font-weight="600">OTHER SESSIONS</text>
+    <circle cx="38" cy="256" r="4" fill="#3ccf63"/><text x="50" y="260" fill="#ececf0">Local Shell</text>
+    <circle cx="38" cy="282" r="4" fill="#ef5b50"/><text x="50" y="286" fill="#ececf0">ops@10.0.0.9 — ended</text>
+  </g>
+</svg>

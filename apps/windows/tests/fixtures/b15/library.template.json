@@ -1,0 +1,16 @@
+{
+ "schema": 1,
+ "id": "b15b0000-0000-4000-8000-000000000001",
+ "name": "Library",
+ "revision": 0,
+ "root": {
+  "id": "b15b0000-0000-4000-8000-000000000002",
+  "name": "Root",
+  "children": [
+   {"kind": "folder", "id": "b15b0000-0000-4000-8000-000000000003", "name": "Dyn Lab", "children": []}
+  ]
+ },
+ "tasks": [
+  {"id": "b15b0000-0000-4000-8000-000000000010", "name": "Dyn List", "kind": {"type": "custom", "program": "C:\\Windows\\System32\\cmd.exe", "args": ["/c", "type", "__OUTPUT__"], "run_on": "local"}, "timeout_secs": 30}
+ ]
+}

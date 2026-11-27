@@ -1,0 +1,39 @@
+[package]
+name = "bastion-cabi"
+version = "0.1.0"
+publish = false
+edition = "2021"
+license = "Apache-2.0"
+description = "Thin C ABI over bastion-ffi's Library for hosts without uniffi bindings (the WinUI shell)."
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "bastion_cabi"
+
+[dependencies]
+bastion-ffi = { path = "../core-ffi" }
+bastion-core = { path = "../core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = "1"
+# Already in the tree through bastion-core; drives the session supervisor.
+tokio = { version = "1", features = ["rt-multi-thread", "time", "sync"] }
+# Key-file import parses and decrypts private keys here (both already in the tree through bastion-core).
+russh = "0.65.0"
+zeroize = "1"
+
+[features]
+# Test builds only (build-core.ps1 -TestHooks): passes core's test hooks through, e.g. BASTION_TEST_PLUGIN_ROLLOUT so a
+# UI proof run can open an unverified fixture plugin. Release builds never enable it.
+test-hooks = ["bastion-ffi/test-hooks"]
+
+[dev-dependencies]
+# Tests only: `HostKeyPolicy::AcceptNew` for the SSH fixture (SEC-07). Never in a library build.
+bastion-core = { path = "../core", features = ["test-accept-new"] }
+keepass = { version = "0.17", features = ["save_kdbx4"] }
+# TOTP codes for the live second-factor test (already in the tree through bastion-core).
+hmac = "0.12"
+sha1 = "0.10"
+tempfile = "3"
+# The in-process SSH server of the SEC-07 probe test (russh is already a dependency).
+tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "time"] }

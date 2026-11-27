@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Hardened-runtime entitlements for ad hoc (unsigned) builds. An ad hoc signature has no team
+     ID, so library validation would refuse the bundled RDP dylib and the downloaded OpenH264
+     library (SHA-256 checked before loading). Only that check is relaxed; no JIT, no unsigned
+     executable memory, no DYLD environment variables. Developer ID builds use Bastion.entitlements. -->
+<plist version="1.0">
+<dict>
+  <key>com.apple.security.cs.disable-library-validation</key><true/>
+</dict>
+</plist>

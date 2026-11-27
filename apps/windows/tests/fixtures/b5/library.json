@@ -1,0 +1,36 @@
+{
+ "schema": 1,
+ "id": "5b5b0000-0000-4000-8000-000000000001",
+ "name": "Library",
+ "revision": 0,
+ "root": {
+  "id": "5b5b0000-0000-4000-8000-000000000002",
+  "name": "Root",
+  "children": [
+   {
+    "kind": "folder",
+    "id": "5b5b0000-0000-4000-8000-000000000003",
+    "name": "Hooks Lab",
+    "children": [
+     {"kind": "connection", "id": "5b5b0000-0000-4000-8000-000000000004", "name": "hook-shell", "protocol": "local", "host": "",
+      "settings": {"port": null, "username": null}, "favorite": false},
+     {"kind": "connection", "id": "5b5b0000-0000-4000-8000-000000000005", "name": "gate-fail", "protocol": "local", "host": "",
+      "settings": {"port": null, "username": null}, "favorite": false},
+     {"kind": "connection", "id": "5b5b0000-0000-4000-8000-000000000006", "name": "gate-slow", "protocol": "local", "host": "",
+      "settings": {"port": null, "username": null}, "favorite": false}
+    ]
+   }
+  ]
+ },
+ "tasks": [
+  {"id": "5b5b0000-0000-4000-8000-000000000010", "name": "Hook Echo", "kind": {"type": "custom", "program": "cmd.exe", "args": ["/c", "echo", "hook-ran"], "run_on": "local"}, "timeout_secs": 30},
+  {"id": "5b5b0000-0000-4000-8000-000000000011", "name": "Gate Fail", "kind": {"type": "custom", "program": "where.exe", "args": ["/q", "nonexistent-bastion-gate"], "run_on": "local"}, "timeout_secs": 30},
+  {"id": "5b5b0000-0000-4000-8000-000000000012", "name": "Gate Slow", "kind": {"type": "custom", "program": "ping.exe", "args": ["-n", "30", "127.0.0.1"], "run_on": "local"}, "timeout_secs": 120}
+ ],
+ "task_hooks": [
+  {"connection_id": "5b5b0000-0000-4000-8000-000000000004", "task_id": "5b5b0000-0000-4000-8000-000000000010", "when": "before_connect"},
+  {"connection_id": "5b5b0000-0000-4000-8000-000000000004", "task_id": "5b5b0000-0000-4000-8000-000000000010", "when": "after_disconnect"},
+  {"connection_id": "5b5b0000-0000-4000-8000-000000000005", "task_id": "5b5b0000-0000-4000-8000-000000000011", "when": "before_connect"},
+  {"connection_id": "5b5b0000-0000-4000-8000-000000000006", "task_id": "5b5b0000-0000-4000-8000-000000000012", "when": "before_connect"}
+ ]
+}

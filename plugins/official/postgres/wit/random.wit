@@ -1,0 +1,11 @@
+// The one WASI interface this plugin calls directly: secure random bytes for the SCRAM client
+// nonce. Copied from WASI 0.2 (`wasi:random/random`), trimmed to the function used.
+package wasi:random@0.2.12;
+
+interface random {
+  get-random-bytes: func(len: u64) -> list<u8>;
+}
+
+world nonce {
+  import random;
+}

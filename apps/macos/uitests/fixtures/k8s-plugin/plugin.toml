@@ -1,0 +1,40 @@
+schema = 1
+id = "com.example.kubernetes"
+name = "Kubernetes fixture"
+version = "0.1.0"
+api = "1.4"
+publisher = "Example tests"
+description = "Kubernetes pods, deployments, services, nodes and logs. Delete, scale and restart when the entry allows changes."
+license = "Apache-2.0"
+repository = "https://github.com/SealedDream/gantry/tree/main/plugins/official/kubernetes"
+
+# The plugin talks to the entry's API server only. No kubectl, no Docker.
+[permissions]
+http = "entry"
+
+[http]
+paths = ["/api/v1/", "/apis/apps/v1/", "/apis/metrics.k8s.io/v1beta1/"]
+methods = ["GET", "DELETE", "PATCH"]
+# The entry's password is a bearer token (a ServiceAccount token); the core adds it.
+auth = { header = "Authorization", format = "bearer" }
+
+[[connection_types]]
+id = "k8s"
+name = "Kubernetes cluster"
+default_port = 6443
+login = "auth"
+
+[[connection_types.fields]]
+key = "namespace"
+label = "Namespace (empty: all)"
+kind = "text"
+
+[[connection_types.fields]]
+key = "allow-changes"
+label = "Allow changes"
+kind = "toggle"
+
+[[commands]]
+id = "refresh"
+title = "Refresh"
+on = "connection:k8s"
