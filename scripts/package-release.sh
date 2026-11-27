@@ -7,7 +7,7 @@
 # <tag>          vX.Y.Z; HEAD must be exactly that tag, the tree clean, and X.Y.Z must equal the
 #                core-ffi and core-cabi crate versions (what the apps report as installed).
 # <plugin-dir>   the signed Official plugin packs from scripts/plugin-release.sh: one
-#                <id>-<version>.bastionplugin and its .sig for each of postgres, proxmox and vmware.
+#                <id>-<version>.gantryplugin and its .sig for each of docker, kubernetes, postgres, proxmox and vmware.
 #                Every record is verified against the keys pinned in core before it is bundled.
 # <windows-zip>  Gantry-windows-x64.zip from apps\windows\package-windows.ps1, built on Windows
 #                from the same tag. The plugin packs are added to a copy under plugins\.
@@ -46,10 +46,10 @@ INDEX_KEYS=$(sed -n '/^const INDEX_KEYS/,/^];/s/.*hex32("\([0-9a-f]*\)").*/\1/p'
 OFFICIAL_KEYS=$(sed -n 's/^const OFFICIAL_KEYS.*hex32("\([0-9a-f]*\)").*/\1/p' core/src/plugin/catalogue.rs)
 [ -n "$INDEX_KEYS" ] && [ -n "$OFFICIAL_KEYS" ] || fail "cannot read the pinned keys from core/src/plugin/catalogue.rs"
 PACKS=""
-for id in postgres proxmox vmware; do
-  set -- "$PLUGINS"/dev.bastion.$id-*.bastionplugin
-  [ $# -eq 1 ] && [ -f "$1" ] || fail "need exactly one dev.bastion.$id-*.bastionplugin in $PLUGINS"
-  sig="${1%.bastionplugin}.sig"
+for id in docker kubernetes postgres proxmox vmware; do
+  set -- "$PLUGINS"/dev.gantry.$id-*.gantryplugin
+  [ $# -eq 1 ] && [ -f "$1" ] || fail "need exactly one dev.gantry.$id-*.gantryplugin in $PLUGINS"
+  sig="${1%.gantryplugin}.sig"
   [ -f "$sig" ] || fail "no signature $sig"
   sh scripts/plugin-sign.sh verify-record "$sig" "$INDEX_KEYS" "$OFFICIAL_KEYS" >/dev/null || fail "signature check failed: $sig"
   PACKS="$PACKS $1 $sig"
