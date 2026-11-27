@@ -17,7 +17,8 @@
 
 <br><br>
 
-<a href="docs/media/video/gantry-launch.mp4"><img src="docs/media/poster.png" width="900" alt="Play the Gantry launch film (68 s)"></a>
+https://github.com/user-attachments/assets/1ecabefe-6c6a-4b16-955f-cd11b079e466
+
 
 <sub><a href="docs/media/video/gantry-launch.mp4">Launch film (68 s)</a> · <a href="docs/media/gallery/README.md">Screenshots</a></sub>
 
